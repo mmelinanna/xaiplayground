@@ -69,6 +69,7 @@ def tab1():
     # Wähle eine Visualisierungsmethode
     visualization_option = st.selectbox('Wähle eine Visualisierungsmethode:', ['Scatterplot', 'Histogramm'])
 
+
     # Visualisierung basierend auf der Auswahl erstellen
     if visualization_option == 'Scatterplot':
         plt.scatter(df['x'], df['y'], alpha=0.5)
