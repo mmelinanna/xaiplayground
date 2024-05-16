@@ -1,7 +1,5 @@
 # xaiplayground
 
-# My Project Documentation
-
 ## Introduction
 This project aims to develop a web-based task management application to help users organize their tasks efficiently.
 
