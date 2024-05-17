@@ -1,22 +1,21 @@
-# xaiplayground
+# XAIplayground
 
 ## Introduction
-This project aims to develop a web-based task management application to help users organize their tasks efficiently.
+This project aims to develop a web-based  user friendly AI playground application where it is able to interact playfully with the underlying data, models and explainability concepts and receive immediate response about the impact of their choices. The central focus is to develop more traceability, transparancy and trust by actively including the end user in the decision making process of the machine learning models and visualize whole process. This is done by following the key concepts: 
 
 ## Features
-1. **User Authentication**: Users can sign up, log in, and manage their accounts securely.
-2. **Task Management**: Users can create, update, and delete tasks. Tasks can be categorized and prioritized.
-3. **Collaboration**: Users can share tasks with other users and collaborate on them in real-time.
-4. **Reminders**: Users can set reminders for tasks to ensure they are completed on time.
-5. **Search and Filter**: Users can search for specific tasks and filter tasks based on various criteria.
-6. **Responsive Design**: The application is responsive and works seamlessly across different devices.
+1. **Synthesize Data**: Users can playfully create and change the data by adjusting initialization parameters like the trend, seasonality, amplitude, noise and other things of a time series
+2. **Explore Data**: Users can look at the data and reveive the most meaningful insights through numerical and visual features (mean, variance, autocorelation, data distribution, sophisticated visualizations)
+3. **model selection**: Users can choose between different models which are trained by the customized data sets
+4. **explainability approach**: Users receive information about the decision making process of the current model through various visualizations and explainability concepts like shap, lime etc.
+5. **Comparison**: Users can playfully compare two datasets and/or models side by side in order to easiely recognize differences based on theirs choices.
 
 ## Technologies Used
 - **Frontend**:
   - HTML5
   - CSS3
-  - JavaScript (React.js)
+  - JavaScript
+  - Python 
 - **Backend**:
   - Node.js
-  - Express.js
-  - MongoDB (Mongoose)
+  - Python (streamlit)
