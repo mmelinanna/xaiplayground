@@ -6,8 +6,9 @@ from datetime import datetime, date
 
 from bokeh.io import curdoc
 from bokeh.layouts import column, row
-from bokeh.models import ColumnDataSource, Slider, TextInput, DateRangeSlider
+from bokeh.models import ColumnDataSource, Slider, TextInput, DateRangeSlider, HelpButton, Tooltip
 from bokeh.plotting import figure
+from bokeh.models.dom import HTML
 
 
 #CONSTANTS
@@ -136,8 +137,15 @@ for w in [offset,slope, amplitude, phase, freq]:
 
 noise.on_change("value", update_noise)
 
+help_slope = HelpButton(tooltip=Tooltip(content=HTML("""
+the slope represents the general trend of the time series.<br />
+It determines the <b>average increase</b> in y over a period of time. More information: <a href="https://en.wikipedia.org/wiki/Slope>slope</a>!
+"""), position="right"))
 
-inputs = column(plot, slope, amplitude, phase, freq, noise)
+
+
+
+inputs = column(plot, row(slope, help_slope), amplitude, phase, freq, noise)
 
 # bokeh serve --show Synth_data_app.py
 curdoc().title = "Synthetic data"
