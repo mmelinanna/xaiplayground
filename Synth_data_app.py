@@ -6,7 +6,8 @@ from datetime import datetime, date
 
 from bokeh.io import curdoc
 from bokeh.layouts import column, row
-from bokeh.models import ColumnDataSource, Slider, TextInput, DateRangeSlider, HelpButton, Tooltip
+from bokeh.models import ColumnDataSource, Slider, TextInput, DateRangeSlider, HelpButton, Tooltip, DataTable, TableColumn
+from bokeh.models import NumberFormatter
 from bokeh.plotting import figure
 from bokeh.models.dom import HTML
 
@@ -41,9 +42,8 @@ def generate_autoregressive_component(t, ar_coefficients):
         ar_data[i] = np.sum(ar_data[:i] * ar_coefficients[:i]) + np.random.randn()    
     return ar_data
 
-
 def generate_noise(noise_level):
-    return noise_level * np.random.randn(len(t))
+    return np.round(noise_level * np.random.randn(len(t)),4)
 
 def generate_synthetic_time_series(t, amplitude, frequency, slope, shift, curvature_quadratic, curvature_cubic,
                                    ar_coefficients=None):
@@ -55,8 +55,8 @@ def generate_synthetic_time_series(t, amplitude, frequency, slope, shift, curvat
     else:
         ar_data = np.zeros_like(t)
 
-    synthetic_data_2 = seasonal_component + trend_component + ar_data
-    return synthetic_data_2
+    synthetic_data_ = seasonal_component + trend_component + ar_data
+    return np.round(synthetic_data_, 4)
 
 # Define parameters    
 t = np.linspace(0, 30, 90)
@@ -74,17 +74,22 @@ synthetic_data = generate_synthetic_time_series(t, amplitude, frequency, slope, 
 default_noise = generate_noise(noise_level)
 
 synthetic_data = pd.Series(synthetic_data + default_noise)
+print(synthetic_data)
+synthetic_data.round(decimals=4)
 
 
 """ MAGIC BOKEH STUFF"""
 
 plot = figure(min_width=400, max_width=1800, height=400, width_policy="max", title="Synthetic time series",
-              tools="crosshair,pan,reset,save,wheel_zoom", margin=(0, 40, 10, 40),
-              x_range=[0, 90], y_range=[-7, 25], align="center")
+              tools="crosshair,pan,reset,save,wheel_zoom", margin=(0, 40, 10, 40), background_fill_color=BACKGROUND_C,
+              min_border=60, x_range=[0, 90], y_range=[-7, 25], align="center")
 
 
 source = ColumnDataSource(data=dict(x=synthetic_data.index, y=synthetic_data.values))
 plot.line('x', 'y', source=source, line_width=3, line_alpha=0.6)
+plot.legend.background_fill_alpha = 0.5
+plot.xaxis.axis_label = "time"
+plot.yaxis.axis_label = "value"
 
 
 #text = TextInput(title="title", value='Synthetic Time Series')
@@ -120,6 +125,7 @@ def update_data(attrname, old, new):
 
     synthetic_data_temp = pd.Series(generate_synthetic_time_series(t, a, k, s, p, curvature_quadratic, curvature_cubic,
                                     ar_coefficients)+ default_noise)
+    synthetic_data_temp.round(decimals=4)
     
     source.data = dict(x=synthetic_data_temp.index, y=synthetic_data_temp.values)
 
@@ -127,9 +133,15 @@ def update_noise(attrname, old, new):
     n = noise.value
     updated_noise = generate_noise(n)
     
+    a = amplitude.value
+    b = offset.value
+    p = phase.value
+    k = freq.value
+    s = slope.value
+
     synthetic_data_temp = pd.Series(generate_synthetic_time_series(t, a, k, s, p, curvature_quadratic, curvature_cubic,
                                     ar_coefficients)+ updated_noise)
-    source.data = dict(y=synthetic_data_temp.index, x=synthetic_data_temp.values)
+    source.data = dict(x=synthetic_data_temp.index, y=synthetic_data_temp.values)
 
 
 for w in [offset,slope, amplitude, phase, freq]:
@@ -139,21 +151,32 @@ noise.on_change("value", update_noise)
 
 help_slope = HelpButton(tooltip=Tooltip(content=HTML("""
 the slope represents the general trend of the time series.<br />
-It determines the <b>average increase</b> in y over a period of time. More information: <a href="https://en.wikipedia.org/wiki/Slope>slope</a>!
-"""), position="right"))
+It determines the <b>average increase</b> in y over a period of time.<br/>
+More information: <a href="https://en.wikipedia.org/wiki/Slope">slope</a>!
+"""), position="right"), align="center")
+
+
+
+columns = [
+        TableColumn(field="x", title="time"),
+        TableColumn(field="y", title="value", formatter=NumberFormatter(format="0.0000")),
+    ]
+
+data_table = DataTable(source=source, columns=columns, width=400, height=280, editable=True, align="center")
 
 
 
 
-inputs = column(plot, row(slope, help_slope), amplitude, phase, freq, noise)
+inputs = column(plot, row(slope, help_slope, align="center"), amplitude, phase, freq, noise)
 
 # bokeh serve --show Synth_data_app.py
 curdoc().title = "Synthetic data"
-curdoc().add_root(column(plot, slope, amplitude, phase, freq, noise, sizing_mode="stretch_width"))
+slider_menu_layout = column(row(slope, help_slope, align="center"), amplitude, phase, freq, noise, sizing_mode="stretch_width")
+middle_row_layout = row(slider_menu_layout, data_table, align="center")
+curdoc().add_root(column(plot, middle_row_layout, sizing_mode="stretch_width"))
 #curdoc().add_root(inputs, sizing_mode="stretch_width")
 
 ##TODO
 ### ADD length of data ? (Current instances: 90)
 ### CHANGE to datetime objects ?
 ### 
-
