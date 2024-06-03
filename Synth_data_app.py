@@ -172,20 +172,24 @@ data_table = DataTable(source=source, columns=columns, width=400, height=280, ed
 
 
 
-# -----------------------------------------------FINALIZE LAYOUT CURRENT_DOC--------------------------------------------#
-radio_group = RadioGroup(labels=["Option 1", "Option 2", "Option 3"], active=0)
-def radio_handler(new):
-    print('Radio button option ' + str(new) + ' selected.')
-    cd.clear()
-    cd.add_root(column(plot, radio_group))
-    cd.tile ="Update"
+# -----------------------------------------------CURRENT_DOC REFRESHMENT--------------------------------------------#
+""" 
+CURRENTLY IN DEVELOPMENT   
+    radio_group = RadioGroup(labels=["Option 1", "Option 2", "Option 3"], active=0)
+    def radio_handler(new):
+        print('Radio button option ' + str(new) + ' selected.')
+        cd.clear()
+        cd.add_root(column(plot, radio_group))
+        cd.tile ="Update"
 
-radio_group.on_event('button_click', radio_handler)
+    radio_group.on_event('button_click', radio_handler)
+"""
 
 # -----------------------------------------------FINALIZE LAYOUT CURRENT_DOC--------------------------------------------#
 
 
 # bokeh serve --show Synth_data_app.py
+# bokeh serve Synth_data_app.py --dev
 
 curdoc().title = "Synthetic data"
 slope_with_annot= row(slope, help_slope, align="center")
@@ -194,7 +198,7 @@ phase_with_annot = row(phase, help_slope, align="center")
 freq_with_annot = row(freq, help_slope, align="center")
 noise_with_annot = row(noise, help_slope, align="center")
 
-slider_menu_layout = column(slope_with_annot, amplitude, phase, freq, noise,radio_group, sizing_mode="stretch_width")
+slider_menu_layout = column(slope_with_annot, amplitude, phase, freq, noise, sizing_mode="stretch_width")
 slider_menu_layout_annot = column(slope_with_annot, amplitude_with_annot, phase_with_annot, freq_with_annot,
                                    noise_with_annot, sizing_mode="stretch_width")
 core_row_layout = row(slider_menu_layout, data_table, align="center")
@@ -208,6 +212,14 @@ cd = curdoc().add_root(column(plot, core_row_layout, sizing_mode="stretch_width"
 
 
 ##TODO
-### ADD length of data ? (Current instances: 90)
-### CHANGE to datetime objects ?
-### 
+### Data Generation
+#   |--- ADD length of data ? (Current instances: 90)
+#   |--- CHANGE to datetime objects ?
+#   |--- Apply Feature: Ground_level/Offset
+#   |--- Apply Feature: Quadratic/Cubic Slope + Corresponding Widget
+
+### Data Visualization
+#    |--- Customizable Autocorrelation Plot (User should choose the lags) (one or span of multiple)
+#    |--- distribution of data change
+
+### Forecast Model implementation 

@@ -17,5 +17,26 @@ This project aims to develop a web-based  user friendly AI playground applicatio
   - JavaScript
   - Python 
 - **Backend**:
-  - Node.js
-  - Python (streamlit)
+  - Node.js (?)
+  - Python (streamlit?)
+
+## Bokeh Server file structure
+-- myapp(directory)
+   |
+   +---__init__.py
+   +---app_hooks.py
+   +---main.py
+   +---request_handler.py
+   +---static
+   |    +---css
+   |    |   +--- special.css
+   |    |
+   |    +---images
+   |    |   +--- example.png
+   |    |
+   |    +---js
+   |        +---special.js
+   | 
+   +---theme.yaml
+   +---templates
+        +---index.html
