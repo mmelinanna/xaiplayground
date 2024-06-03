@@ -10,7 +10,9 @@ from bokeh.models import ColumnDataSource, Slider, TextInput, DateRangeSlider, H
 from bokeh.models import NumberFormatter, TableColumn, RadioGroup
 from bokeh.plotting import figure
 from bokeh.models.dom import HTML
+from bokeh.themes import Theme
 
+from statsmodels.tsa.statespace.sarimax import SARIMAX
 
 #CONSTANTS
 MAX_WIDTH_SLIDERS=600
@@ -89,9 +91,9 @@ plot = figure(min_width=400, max_width=1800, height=400, width_policy="max", tit
 
 
 source = ColumnDataSource(data=dict(time=synthetic_data.index, synthetic_data=synthetic_data.values))
-plot.line('time', 'synthetic_data', source=source, line_width=3, line_alpha=0.6,  legend_label="synthetic_data")
+plot.line('time', 'synthetic_data', source=source, line_width=3, line_alpha=0.8,  legend_label="synthetic_data")
 plot.legend.location = "top_left"
-plot.legend.background_fill_alpha = 0.5
+plot.legend.background_fill_alpha = 0.8
 plot.xaxis.axis_label = "time"
 plot.yaxis.axis_label = "value"
 
@@ -153,6 +155,12 @@ noise.on_change("value", update_noise)
 for widget_ in [offset,slope, amplitude, phase, freq]:
     widget_.on_change('value', update_data)
 
+# ------------------------------------------------MODEL IMPLEMENTATION----------------------------------------------- #
+# Train-Test Split
+train_ds =  synthetic_data[synthetic_data.index < 60]   
+test_ds = synthetic_data[synthetic_data.index >= 60]
+ARMAmodel = SARIMAX(train_ds, order = (1, 0, 1))    #ARIMA(p, d, q) -> pdq account for seasonality, trend, and noise in data
+
 
 # -----------------------------------------------USER EXPLANATION (HTML)----------------------------------------------#
 help_slope = HelpButton(tooltip=Tooltip(content=HTML("""
@@ -189,7 +197,8 @@ CURRENTLY IN DEVELOPMENT
 
 
 # bokeh serve --show Synth_data_app.py
-# bokeh serve Synth_data_app.py --dev
+# bokeh serve Synth_data_app.py --dev                        <---DEV-mode
+# http://localhost:5006/Synth_data_app
 
 curdoc().title = "Synthetic data"
 slope_with_annot= row(slope, help_slope, align="center")
@@ -202,7 +211,10 @@ slider_menu_layout = column(slope_with_annot, amplitude, phase, freq, noise, siz
 slider_menu_layout_annot = column(slope_with_annot, amplitude_with_annot, phase_with_annot, freq_with_annot,
                                    noise_with_annot, sizing_mode="stretch_width")
 core_row_layout = row(slider_menu_layout, data_table, align="center")
-cd = curdoc().add_root(column(plot, core_row_layout, sizing_mode="stretch_width"))
+
+cd = curdoc()
+cd.add_root(column(plot, core_row_layout, sizing_mode="stretch_width"))
+cd.theme = Theme(filename="theme.yaml")
 
 
 
@@ -223,3 +235,7 @@ cd = curdoc().add_root(column(plot, core_row_layout, sizing_mode="stretch_width"
 #    |--- distribution of data change
 
 ### Forecast Model implementation 
+#   |--- 1. State of the Art Deterministic Forecast: (SARMIAX)
+#   |--- 2. ML-based: Random Forest
+#   |--- 3. ML-based: XGB Boost
+#   |--- 4. Sophisticated ML-model: (CNN), (LSTM)

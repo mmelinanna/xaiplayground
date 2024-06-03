@@ -40,3 +40,22 @@ This project aims to develop a web-based  user friendly AI playground applicatio
    +---theme.yaml
    +---templates
         +---index.html
+
+
+## SARIMAX Model
+
+**order (Non-Seasonal Order)**:
+
+The order parameter specifies the orders of the non-seasonal components of the SARIMA model.
+It is denoted as (p, d, q), where:
+p represents the order of the AutoRegressive (AR) component, which captures the linear relationship between the current observation and its past values.
+d represents the order of differencing required to make the time series stationary. It indicates how many differences you need to take to achieve stationarity.
+q represents the order of the Moving Average (MA) component, which captures the linear relationship between the current observation and past white noise (residuals) terms.
+
+**seasonal_order (Seasonal Order)**:
+
+The seasonal_order parameter specifies the orders of the seasonal components of the SARIMA model.
+It is denoted as (P, D, Q, s), where:
+P represents the seasonal order of the Seasonal AutoRegressive (SAR) component, which captures the seasonal linear relationship between the current observation and its past values separated by a seasonal period s.
+D represents the seasonal order of differencing for seasonal stationarity.
+Q represents the seasonal order of the Seasonal Moving Average (SMA) component, which captures the seasonal linear relationship between the current observation and past white noise (residuals) separated by a seasonal period s.
