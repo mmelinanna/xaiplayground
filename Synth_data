@@ -1,3 +1,4 @@
+
 import pandas as pd  
 import numpy as np
 import matplotlib.pyplot as plt
@@ -13,10 +14,6 @@ from bokeh.models.dom import HTML
 from bokeh.themes import Theme
 
 from statsmodels.tsa.statespace.sarimax import SARIMAX
-from sklearn.ensemble import RandomForestRegressor
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import mean_squared_error
-
 
 #CONSTANTS
 MAX_WIDTH_SLIDERS=600
@@ -164,20 +161,6 @@ for widget_ in [offset,slope, amplitude, phase, freq]:
 train_ds =  synthetic_data[synthetic_data.index < 60]   
 test_ds = synthetic_data[synthetic_data.index >= 60]
 ARMAmodel = SARIMAX(train_ds, order = (1, 0, 1))    #ARIMA(p, d, q) -> pdq account for seasonality, trend, and noise in data
-
-#RandomForestRegressor
-rf_regressor = RandomForestRegressor(n_estimators=100, random_state=42)
-
-# Angenommen, die letzte Spalte ist die Zielvariable (y)
-X_train = train_ds.iloc[:, :-1]  # Alle Spalten außer der letzten
-y_train = train_ds.iloc[:, -1]   # Die letzte Spalte
-
-X_test = test_ds.iloc[:, :-1]    # Alle Spalten außer der letzten
-y_test = test_ds.iloc[:, -1]     # Die letzte Spalte
-
-rf_regressor.fit(X_train, y_train)
-y_pred = rf_regressor.predict(X_test)
-
 
 
 # -----------------------------------------------USER EXPLANATION (HTML)----------------------------------------------#
