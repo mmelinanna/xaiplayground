@@ -163,8 +163,13 @@ for widget_ in [offset,slope, amplitude, phase, freq]:
 # Train-Test Split
 train_ds =  synthetic_data[synthetic_data.index < 60]   
 test_ds = synthetic_data[synthetic_data.index >= 60]
+
+train_df = pd.DataFrame(train_ds)
+test_df= pd.DataFrame(test_ds)
+
 ARMAmodel = SARIMAX(train_ds, order = (1, 0, 1))    #ARIMA(p, d, q) -> pdq account for seasonality, trend, and noise in data
 
+<<<<<<< Updated upstream
 #RandomForestRegressor
 rf_regressor = RandomForestRegressor(n_estimators=100, random_state=42)
 
@@ -179,6 +184,17 @@ rf_regressor.fit(X_train, y_train)
 y_pred = rf_regressor.predict(X_test)
 
 
+=======
+<<<<<<< Updated upstream
+=======
+#RandomForestRegressor
+
+
+
+
+
+>>>>>>> Stashed changes
+>>>>>>> Stashed changes
 
 # -----------------------------------------------USER EXPLANATION (HTML)----------------------------------------------#
 help_slope = HelpButton(tooltip=Tooltip(content=HTML("""
