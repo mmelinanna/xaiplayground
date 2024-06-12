@@ -46,7 +46,6 @@ def generate_seasonal_component(t, amplitude, frequency, shift):
     return amplitude * np.sin(2 * np.pi * frequency * t + shift* np.pi)
 
 def generate_trend_component(t, slope, curvature_quadratic, curvature_cubic):
-    print("trend_component= "+ str(slope * t + curvature_quadratic * t**2 + curvature_cubic * t**3))
     return slope * t + curvature_quadratic * t**2 + curvature_cubic * t**3
 
 def generate_autoregressive_component(t, ar_coefficients):
