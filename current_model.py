@@ -4,6 +4,7 @@ from bokeh.models import ColumnDataSource
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 from statsmodels.tsa.arima.model import ARIMA
 
+
 class model_creator(object):
     def __init__(self, d_source, split_ind, model_selection="SARIMAX", conf_i=0.95):
         self.d_source = d_source
