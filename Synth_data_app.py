@@ -278,7 +278,7 @@ for widget_ in [offset,slope, amplitude, phase, freq]:
 
                    
 
-radio_group_models = RadioGroup(labels=["SARIMAX", "RF_regressor", "XGB_Boost"], active=None, align="center")
+radio_group_models = RadioGroup(labels=["SARIMAX", "RF_regressor", "1D-CNN"], active=None, align="center")
 
 def radio_handler(attrname, old, new):
     print('Radio button option ' + str(new) + ' selected.')

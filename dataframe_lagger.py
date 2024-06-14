@@ -2,27 +2,29 @@ from pandas import DataFrame
 from pandas import concat
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.metrics import mean_absolute_error
 
 
 
 def time_series_lagger(data, n_in=1, n_out=1, dropnan=True):
 	"""
-	Frame a time series as a supervised learning dataset.
 	Arguments:
 		data: Sequence of observations as a list or NumPy array.
 		n_in: Number of lag observations as input (X).
 		n_out: Number of observations as output (y).
 		dropnan: Boolean whether or not to drop rows with NaN values.
 	Returns:
-		Pandas DataFrame of series framed for supervised learning.
+		pandas df: dimensionality LEN_DATA x (N_IN + N_OUT) initial:(90x(5+1))
 	"""
 	n_vars = 1 if type(data) is list else data.shape[1]
 	df = DataFrame(data)
 	cols, names = list(), list()
+	
 	# input sequence (t-n, ... t-1)
 	for i in range(n_in, 0, -1):
 		cols.append(df.shift(i))
 		names += [('var%d(t-%d)' % (j+1, i)) for j in range(n_vars)]
+		
 	# forecast sequence (t, t+1, ... t+n)
 	for i in range(0, n_out):
 		cols.append(df.shift(-i))
@@ -30,30 +32,60 @@ def time_series_lagger(data, n_in=1, n_out=1, dropnan=True):
 			names += [('var%d(t)' % (j+1)) for j in range(n_vars)]
 		else:
 			names += [('var%d(t+%d)' % (j+1, i)) for j in range(n_vars)]
-	# put it all together
+	
 	agg = concat(cols, axis=1)
 	agg.columns = names
-	# drop rows with NaN values
+	
 	if dropnan:
 		agg.dropna(inplace=True)
 		
 	return agg
 
+def train_test_split(data, test_set_len):
+	return data[:-test_set_len, :], data[-test_set_len:, :]
+
 
 # fit an random forest model and make a one step prediction
 def random_forest_forecast(train, testX):
-	# transform list into array
-	train = np.asarray(train)
+	# transform list into array if necessary
+	train_ = np.asarray(train)
 	# split into input and output columns
-	trainX, trainy = train[:, :-1], train[:, -1]
-	print("trainX: {}".format(trainX[0:5]))
+	trainX, trainy = train_[:, :-1], train_[:, -1]
+	print("trainX: \n{}".format(trainX[0:5]))
+	print("trainy:\n{}".format(trainy))
 	print(80*"-")
-	# fit model
+	
 	model = RandomForestRegressor(n_estimators=300)
 	model.fit(trainX, trainy)
-	print(testX)
 	# make a one-step prediction
-	yhat = model.predict([testX])
-	return yhat[0]
+	#print("real value: {}".format(train))
+	y_pred = model.predict([testX])
+	return y_pred[0]
+
+
+
+def walk_forward_validation(data, test_set_len):
+	"""
+	Arguments:
+		data: Sequence of observations as a list or NumPy array.
+		test_set_len: Number of test set observations
+	Returns:
+		error: 
+		test_label: returns the test labels (real values) for the test sequence via 
+		prediction_array: returns all prediction via python list
+	"""
+	prediction_list = list()
+	train_data, test_data = train_test_split(data, test_set_len)
+	history = [x for x in train_data]     #--> initial: 60x6 
+	for i in range(len(test_data)):		  #--> initial: 30x6	
+		testX, testy = test_data[i, :-1], test_data[i, -1]     #--> 1x5; 1x1 from 30x5, 30x1
+		y_pred = random_forest_forecast(history, testX)		   #--> fit rf on history, evaluate on test instance		
+		prediction_list.append(y_pred)						   #--> build y_pred array	
+		history.append(test_data[i])						   #--> append to history	
+		print('>expected=%.1f, predicted=%.1f' % (testy, y_pred))
+		# estimate prediction error
+	print(test_data[:, -1])
+	error = mean_absolute_error(test_data[:, -1], prediction_list)
+	return error, test_data[:, -1], prediction_list
 
 
