@@ -63,8 +63,36 @@ def random_forest_forecast(train, testX):
 	return y_pred[0]
 
 
+def random_forest_initial(train):
+	# transform list into array if necessary
+	train_ = np.asarray(train)
+	# split into input and output columns
+	trainX, trainy = train_[:, :-1], train_[:, -1]
+	print("trainX: \n{}".format(trainX[0:5]))
+	print("trainy:\n{}".format(trainy))
+	print(80*"-")
+	
+	current_model = RandomForestRegressor(n_estimators=300)
+	current_model.fit(trainX, trainy)
+	return current_model
 
-def walk_forward_validation(data, test_set_len):
+
+def walk_forward_validation_historic(data, test_set_len):
+	prediction_list = list()
+	train_data, test_data = train_test_split(data, test_set_len)
+	current_model = random_forest_initial(train_data)
+	for i in range(len(test_data)):
+		testX, testy = test_data[i, :-1], test_data[i, -1]
+		y_pred= current_model.predict([testX])
+		prediction_list.append(y_pred[0])	
+		print('>expected=%.1f, predicted=%.1f' % (testy, y_pred))
+
+	error = mean_absolute_error(test_data[:, -1], prediction_list)
+	return error, test_data[:, -1], prediction_list
+
+
+
+def walk_forward_validation_online(data, test_set_len):
 	"""
 	Arguments:
 		data: Sequence of observations as a list or NumPy array.
