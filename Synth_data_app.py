@@ -27,7 +27,7 @@ BACKGROUND_C= "#fefffa"
 DATASET_LENGTH=90
 MAIN_FIG_HEIGHT=340
 MIN_WIDTH=400
-MODEL_OPTIONS=["SARIMAX", "RandomForestRegressor", "XGB"]
+MODEL_OPTIONS=["SARIMAX", "RF_regressor", "1D-CNN"]
 
 
 '''SYNTHETIC DATA GENERATION0.03
@@ -278,7 +278,7 @@ for widget_ in [offset,slope, amplitude, phase, freq]:
 
                    
 
-radio_group_models = RadioGroup(labels=["SARIMAX", "RF_regressor", "1D-CNN"], active=None, align="center")
+radio_group_models = RadioGroup(labels=MODEL_OPTIONS, active=None, align="center")
 
 def radio_handler(attrname, old, new):
     print('Radio button option ' + str(new) + ' selected.')

@@ -45,23 +45,6 @@ def train_test_split(data, test_set_len):
 	return data[:-test_set_len, :], data[-test_set_len:, :]
 
 
-# fit an random forest model and make a one step prediction
-def random_forest_forecast(train, testX):
-	# transform list into array if necessary
-	train_ = np.asarray(train)
-	# split into input and output columns
-	trainX, trainy = train_[:, :-1], train_[:, -1]
-	print("trainX: \n{}".format(trainX[0:5]))
-	print("trainy:\n{}".format(trainy))
-	print(80*"-")
-	
-	model = RandomForestRegressor(n_estimators=300)
-	model.fit(trainX, trainy)
-	# make a one-step prediction
-	#print("real value: {}".format(train))
-	y_pred = model.predict([testX])
-	return y_pred[0]
-
 
 def random_forest_initial(train):
 	# transform list into array if necessary
@@ -79,17 +62,42 @@ def random_forest_initial(train):
 
 def walk_forward_validation_historic(data, test_set_len):
 	prediction_list = list()
-	train_data, test_data = train_test_split(data, test_set_len)
+	train_data, test_data = train_test_split(data.values, test_set_len) #receives np.array (df.values) 90x5 -> returns df 60x5, 30x5
+	print(data.shape)
+	print(train_data.shape)
+	print(test_data.shape)
 	current_model = random_forest_initial(train_data)
 	for i in range(len(test_data)):
-		testX, testy = test_data[i, :-1], test_data[i, -1]
+		testX, testy = test_data[i, :-1], test_data[i, -1]      #--> 1x5; 1x1 from 30x5, 30x1
 		y_pred= current_model.predict([testX])
 		prediction_list.append(y_pred[0])	
-		print('>expected=%.1f, predicted=%.1f' % (testy, y_pred))
+		print('>expected=%.1f, predicted=%.1f' % (testy, y_pred[0]))
 
 	error = mean_absolute_error(test_data[:, -1], prediction_list)
 	return error, test_data[:, -1], prediction_list
 
+
+
+#-----#
+#-----#
+#-------------------------------------------------------------------------FOLLOWING FUNCTIONS IN DEVELOPMENT-------------------------#
+#-----#
+#-----#
+def random_forest_forecast(train, testX):
+	# transform list into array if necessary
+	train_ = np.asarray(train)
+	# split into input and output columns
+	trainX, trainy = train_[:, :-1], train_[:, -1]
+	print("trainX: \n{}".format(trainX[0:5]))
+	print("trainy:\n{}".format(trainy))
+	print(80*"-")
+	
+	model = RandomForestRegressor(n_estimators=300)
+	model.fit(trainX, trainy)
+	# make a one-step prediction
+	#print("real value: {}".format(train))
+	y_pred = model.predict([testX])
+	return y_pred[0]
 
 
 def walk_forward_validation_online(data, test_set_len):
@@ -115,5 +123,4 @@ def walk_forward_validation_online(data, test_set_len):
 	print(test_data[:, -1])
 	error = mean_absolute_error(test_data[:, -1], prediction_list)
 	return error, test_data[:, -1], prediction_list
-
-
+#-------------------------------------------------------------------------FUNCTIONS ABOVE IN DEVELOPMENT-------------------------#
