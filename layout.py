@@ -12,6 +12,10 @@ from bokeh.plotting import figure
 from bokeh.models.dom import HTML
 from bokeh.themes import Theme
 
+from bokeh.models import Panel, Tabs, Tooltip
+from bokeh.models.layouts import Row
+from bokeh.plotting import figure, show
+
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.model_selection import GridSearchCV, train_test_split
@@ -124,6 +128,30 @@ date_range_slider = DateRangeSlider(value=(date(2018, 9, 15), date(2020, 9, 15))
 
 
 
+p1 = figure(width=300, height=300)
+p1.scatter([1, 2, 3, 4, 5], [6, 7, 2, 4, 5], size=20, color="navy", alpha=0.5)
+
+p2 = figure(width=300, height=300)
+p2.line([1, 2, 3, 4, 5], [6, 7, 2, 4, 5], line_width=3, color="navy", alpha=0.5)
+
+p3 = figure(width=300, height=300)
+p3.scatter([1, 2, 3, 4, 5], [6, 7, 2, 4, 5], size=20, color="navy", alpha=0.5)
+
+p4 = figure(width=300, height=300)
+p4.line([1, 2, 3, 4, 5], [6, 7, 2, 4, 5], line_width=3, color="navy", alpha=0.5)
+
+# Panels erstellen
+tab1 = Panel(p1, title="Tab 1")
+tab2 = Panel(p2, title="Tab 2")
+tab3 = Panel(p3, title="Tab 3")
+
+# Tabs zusammenfassen
+tabs = Tabs(tabs=[tab1, tab2, tab3])
+
+
+
+
+
 # -----------------------------------------------CALLBACK IMPLEMENTATION--------------------------------------------#
 def update_title(attrname, old, new):
     plot.title.text = text.value
@@ -219,6 +247,7 @@ core_row_layout = row(slider_menu_layout, data_table, align="center")
 
 cd = curdoc()
 cd.add_root(column(plot, core_row_layout, sizing_mode="stretch_width"))
+cd.add_root(tabs)
 cd.theme = Theme(filename="theme.yaml")
 
 
