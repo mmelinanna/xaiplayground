@@ -98,7 +98,7 @@ synthetic_data.round(decimals=4)
 #-----------------------------------------------BASIC BOKEH IMPLEMENTATION-------------------------------------------#
 
 plot = figure(min_width=MIN_WIDTH, max_width=1800, height=MAIN_FIG_HEIGHT, width_policy="max", title="Synthetic time series",
-              tools="pan,reset,save,wheel_zoom", margin=(0, 40, 10, 40), background_fill_color=BACKGROUND_C,
+              tools="pan,reset,save, xwheel_zoom", margin=(0, 40, 10, 40), background_fill_color=BACKGROUND_C,
               x_range=[0, 90], y_range=[-7, 25], align="center")
 
 
@@ -108,6 +108,7 @@ plot.legend.location = "top_left"
 plot.legend.background_fill_alpha = 0.8
 plot.xaxis.axis_label = "time"
 plot.yaxis.axis_label = "value"
+plot.toolbar.active_scroll = "auto"
 
 
 text = TextInput(title="title", value='Synthetic Time Series fancy')
@@ -174,7 +175,7 @@ y_test_CDS = ColumnDataSource({"time":[],"value":[]})
 y_pred_CDS = ColumnDataSource({"time": [],"lower_y": [], "upper_y": [],"predictions":[]})
 
 plot_2 = figure(min_width=MIN_WIDTH, max_width=1800, height=MAIN_FIG_HEIGHT, width_policy="max", title="Synthetic time series prediction",
-              tools="pan,reset,save,wheel_zoom", margin=(0, 40, 10, 40), background_fill_color=BACKGROUND_C,
+              tools="pan,reset,save,xwheel_zoom", margin=(0, 40, 10, 40), background_fill_color=BACKGROUND_C,
                 x_range=plot.x_range, y_range=[-7, 25], align="center")
 plot_2.line('time', 'value', source=y_train_CDS, line_width=3, line_alpha=0.8, legend_label="Train_data")
 plot_2.line('time', 'value', source=y_test_CDS, line_width=3, line_alpha=0.8, line_color="#2ca02c", legend_label="Test_data")
@@ -183,6 +184,7 @@ plot_2.legend.location = "top_left"
 plot_2.legend.background_fill_alpha = 0.8
 plot_2.xaxis.axis_label = "time"
 plot_2.yaxis.axis_label = "value"
+plot_2.toolbar.active_scroll = "auto"
 
 
 

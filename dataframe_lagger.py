@@ -20,18 +20,18 @@ def time_series_lagger(data, n_in=1, n_out=1, dropnan=True):
 	df = DataFrame(data)
 	cols, names = list(), list()
 	
-	# input sequence (t-n, ... t-1)
-	for i in range(n_in, 0, -1):
+	# input sequence (t-n, ... t-1, t0)
+	for i in range(n_in-1, -1, -1):
 		cols.append(df.shift(i))
-		names += [('var%d(t-%d)' % (j+1, i)) for j in range(n_vars)]
-		
-	# forecast sequence (t, t+1, ... t+n)
-	for i in range(0, n_out):
-		cols.append(df.shift(-i))
 		if i == 0:
 			names += [('var%d(t)' % (j+1)) for j in range(n_vars)]
 		else:
-			names += [('var%d(t+%d)' % (j+1, i)) for j in range(n_vars)]
+			names += [('var%d(t-%d)' % (j+1, i)) for j in range(n_vars)]
+		
+	# forecast sequence (t, t+1, ... t+n)
+	for i in range(1, n_out+1):
+		cols.append(df.shift(-i))
+		names += [('var%d(t+%d)' % (j+1, i)) for j in range(n_vars)]
 	
 	agg = concat(cols, axis=1)
 	agg.columns = names
