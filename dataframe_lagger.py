@@ -51,7 +51,7 @@ def random_forest_initial(train):
 	train_ = np.asarray(train)
 	# split into input and output columns
 	trainX, trainy = train_[:, :-1], train_[:, -1]
-	print("trainX: \n{}".format(trainX[0:5]))
+	print("trainX: \n{}".format(trainX[0:10]))
 	print("trainy:\n{}".format(trainy))
 	print(80*"-")
 	
@@ -63,7 +63,7 @@ def random_forest_initial(train):
 def walk_forward_validation_historic(data, test_set_len):
 	prediction_list = list()
 	train_data, test_data = train_test_split(data.values, test_set_len) #receives np.array (df.values) 90x5 -> returns df 60x5, 30x5
-	print(data.shape)
+	print("data_shape: "+ str(data.shape))
 	print(train_data.shape)
 	print(test_data.shape)
 	current_model = random_forest_initial(train_data)
@@ -74,7 +74,7 @@ def walk_forward_validation_historic(data, test_set_len):
 		print('>expected=%.1f, predicted=%.1f' % (testy, y_pred[0]))
 
 	error = mean_absolute_error(test_data[:, -1], prediction_list)
-	return error, test_data[:, -1], prediction_list
+	return current_model, error, test_data[:, -1], prediction_list
 
 
 
