@@ -19,6 +19,7 @@ from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.metrics import mean_squared_error
 
 from statsmodels.tsa.arima.model import ARIMA
+from xgboost import XGBRegressor
 
 
 #CONSTANTS
@@ -219,6 +220,9 @@ def create_model(train_df, test_df, model_selection):
 
 
     elif model_selection=="CNN":
+        pass
+
+    elif model_selection=="XGBOOST":
         pass
 
     return current_model, y_pred_df

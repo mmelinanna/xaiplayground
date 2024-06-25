@@ -59,8 +59,16 @@ def random_forest_initial(train):
 	current_model.fit(trainX, trainy)
 	return current_model
 
+def xgboost_initial(train):
+	train_ = np.asarray(train)
+	# split into input and output columns
+	trainX, trainy = train_[:, :-1], train_[:, -1]
+	print("trainX: \n{}".format(trainX[0:10]))
+	print("trainy:\n{}".format(trainy))
+	print(80*"-")
 
-def walk_forward_validation_historic(data, test_set_len):
+
+def walk_forward_validation_historic(data, test_set_len, ):
 	prediction_list = list()
 	train_data, test_data = train_test_split(data.values, test_set_len) #receives np.array (df.values) 90x5 -> returns df 60x5, 30x5
 	print("data_shape: "+ str(data.shape))
