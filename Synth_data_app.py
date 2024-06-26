@@ -28,7 +28,7 @@ BACKGROUND_C= "#fefffa"
 DATASET_LENGTH=90
 MAIN_FIG_HEIGHT=340
 MIN_WIDTH=400
-MODEL_OPTIONS=["SARIMAX", "RF_regressor", "1D-CNN"]
+MODEL_OPTIONS=["SARIMAX", "RF_regressor", "1D-CNN", "XGBOOST"]
 
 
 '''SYNTHETIC DATA GENERATION0.03
@@ -212,7 +212,7 @@ def create_model(train_df, test_df, model_selection):
         data_concatenated = pd.concat([train_df, test_df.iloc[1:,:]], ignore_index=True)
         tsl = time_series_lagger(data_concatenated.loc[:,"values"].to_list(), n_in=6, n_out=1, dropnan=True)
         print(tsl)
-        current_model, mae, y, y_pred = walk_forward_validation_historic(tsl, test_df.shape[0])
+        current_model, mae, y, y_pred = walk_forward_validation_historic(tsl, test_df.shape[0], model_selection="RF")
         y_pred_df = pd.DataFrame(data={"Predictions":y_pred, "lower values":y_pred, "upper values":y_pred})
         y_pred_df.index = test_df["time"]
         print(y_pred_df)
@@ -223,7 +223,14 @@ def create_model(train_df, test_df, model_selection):
         pass
 
     elif model_selection=="XGBOOST":
-        pass
+        data_concatenated = pd.concat([train_df, test_df.iloc[1:,:]], ignore_index=True)
+        tsl = time_series_lagger(data_concatenated.loc[:,"values"].to_list(), n_in=6, n_out=1, dropnan=True)
+        print(tsl)
+        current_model, mae, y, y_pred = walk_forward_validation_historic(tsl, test_df.shape[0], model_selection="XGB")
+        y_pred_df = pd.DataFrame(data={"Predictions":y_pred, "lower values":y_pred, "upper values":y_pred})
+        y_pred_df.index = test_df["time"]
+        print(y_pred_df)
+
 
     return current_model, y_pred_df
 
@@ -296,7 +303,7 @@ for widget_ in [offset,slope, amplitude, phase, freq]:
                    
 
 radio_group_models = RadioGroup(labels=MODEL_OPTIONS, active=None, align="center")
-model_selection_dict = {key:value for (key,value) in zip(range(3), MODEL_OPTIONS)}
+model_selection_dict = {key:value for (key,value) in zip(range(4), MODEL_OPTIONS)}
 
 def radio_handler(attrname, old, new):
     print('Radio button option ' + str(new) + ' selected.')
