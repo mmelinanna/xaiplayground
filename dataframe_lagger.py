@@ -3,6 +3,7 @@ from pandas import concat
 import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error
+from xgboost import XGBRegressor
 
 
 
@@ -51,22 +52,36 @@ def random_forest_initial(train):
 	train_ = np.asarray(train)
 	# split into input and output columns
 	trainX, trainy = train_[:, :-1], train_[:, -1]
-	print("trainX: \n{}".format(trainX[0:5]))
+	print("trainX: \n{}".format(trainX[0:10]))
 	print("trainy:\n{}".format(trainy))
 	print(80*"-")
 	
-	current_model = RandomForestRegressor(n_estimators=300)
+	current_model = RandomForestRegressor(n_estimators=100, random_state=42)
+	current_model.fit(trainX, trainy)
+	return current_model
+
+def xgboost_initial(train):
+	train_ = np.asarray(train)
+	# split into input and output columns
+	trainX, trainy = train_[:, :-1], train_[:, -1]
+	print("trainX: \n{}".format(trainX[0:10]))
+	print("trainy:\n{}".format(trainy))
+	print(80*"-")
+	current_model = XGBRegressor(objective='reg:squarederror', n_estimators=1000)
 	current_model.fit(trainX, trainy)
 	return current_model
 
 
-def walk_forward_validation_historic(data, test_set_len):
+def walk_forward_validation_historic(data, test_set_len, model_selection):
 	prediction_list = list()
 	train_data, test_data = train_test_split(data.values, test_set_len) #receives np.array (df.values) 90x5 -> returns df 60x5, 30x5
-	print(data.shape)
+	print("data_shape: "+ str(data.shape))
 	print(train_data.shape)
 	print(test_data.shape)
-	current_model = random_forest_initial(train_data)
+	if model_selection=="RF":
+		current_model = random_forest_initial(train_data)
+	else:
+		current_model = xgboost_initial(train_data)
 	for i in range(len(test_data)):
 		testX, testy = test_data[i, :-1], test_data[i, -1]      #--> 1x5; 1x1 from 30x5, 30x1
 		y_pred= current_model.predict([testX])
@@ -74,7 +89,7 @@ def walk_forward_validation_historic(data, test_set_len):
 		print('>expected=%.1f, predicted=%.1f' % (testy, y_pred[0]))
 
 	error = mean_absolute_error(test_data[:, -1], prediction_list)
-	return error, test_data[:, -1], prediction_list
+	return current_model, error, test_data[:, -1], prediction_list
 
 
 

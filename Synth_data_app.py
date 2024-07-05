@@ -19,6 +19,7 @@ from sklearn.model_selection import GridSearchCV, train_test_split
 from sklearn.metrics import mean_squared_error
 
 from statsmodels.tsa.arima.model import ARIMA
+from xgboost import XGBRegressor
 
 
 #CONSTANTS
@@ -27,7 +28,7 @@ BACKGROUND_C= "#fefffa"
 DATASET_LENGTH=90
 MAIN_FIG_HEIGHT=340
 MIN_WIDTH=400
-MODEL_OPTIONS=["SARIMAX", "RF_regressor", "1D-CNN"]
+MODEL_OPTIONS=["SARIMAX", "RF_regressor", "1D-CNN", "XGBOOST"]
 
 
 '''SYNTHETIC DATA GENERATION0.03
@@ -187,6 +188,8 @@ plot_2.yaxis.axis_label = "value"
 plot_2.toolbar.active_scroll = "auto"
 
 
+# Include own modules 
+from dataframe_lagger import time_series_lagger, train_test_split, walk_forward_validation_historic
 
 
 def create_model(train_df, test_df, model_selection):
@@ -201,23 +204,42 @@ def create_model(train_df, test_df, model_selection):
         y_pred_df = y_pred.conf_int(alpha = 0.05) 
         y_pred_df["Predictions"] = current_model.predict(start = y_pred_df.index[0], end = y_pred_df.index[-1])
         y_pred_df.index = test_df["time"]
+        print(y_pred_df)
         y_pred_out = y_pred_df["Predictions"] 
         #current_model.plot_diagnostics(figsize=(16, 8))
 
-    elif current_model =="RF_regressor":
-        rf_regressor = RandomForestRegressor(n_estimators=100, max_features="sqrt", max_depth=5)
-        current_model = rf_regressor.fit()
-        ##TODO very much
+    elif model_selection =="RF_regressor":
+        data_concatenated = pd.concat([train_df, test_df.iloc[1:,:]], ignore_index=True)
+        tsl = time_series_lagger(data_concatenated.loc[:,"values"].to_list(), n_in=6, n_out=1, dropnan=True)
+        print(tsl)
+        current_model, mae, y, y_pred = walk_forward_validation_historic(tsl, test_df.shape[0], model_selection="RF")
+        y_pred_df = pd.DataFrame(data={"Predictions":y_pred, "lower values":y_pred, "upper values":y_pred})
+        y_pred_df.index = test_df["time"]
+        print(y_pred_df)
+        ##TODO very much --> not so much anymore
 
 
-    elif current_model=="CNN":
+    elif model_selection=="CNN":
         pass
+
+    elif model_selection=="XGBOOST":
+        data_concatenated = pd.concat([train_df, test_df.iloc[1:,:]], ignore_index=True)
+        tsl = time_series_lagger(data_concatenated.loc[:,"values"].to_list(), n_in=6, n_out=1, dropnan=True)
+        print(tsl)
+        current_model, mae, y, y_pred = walk_forward_validation_historic(tsl, test_df.shape[0], model_selection="XGB")
+        y_pred_df = pd.DataFrame(data={"Predictions":y_pred, "lower values":y_pred, "upper values":y_pred})
+        y_pred_df.index = test_df["time"]
+        print(y_pred_df)
+
 
     return current_model, y_pred_df
 
 
 def update_model_(split_ind=60, model_selection="SARIMAX"):
     print('button clicked.')
+    model_selection_index = radio_group_models.active
+    model_selection = model_selection_dict[model_selection_index]
+    print(model_selection)
     if train_test_split_slider.value is not None:
         split_ind=train_test_split_slider.value
     train_df = pd.DataFrame(data={"time": source.data["time"][0:split_ind], "values": source.data["synthetic_data"][0:split_ind]})   
@@ -281,6 +303,7 @@ for widget_ in [offset,slope, amplitude, phase, freq]:
                    
 
 radio_group_models = RadioGroup(labels=MODEL_OPTIONS, active=None, align="center")
+model_selection_dict = {key:value for (key,value) in zip(range(4), MODEL_OPTIONS)}
 
 def radio_handler(attrname, old, new):
     print('Radio button option ' + str(new) + ' selected.')
