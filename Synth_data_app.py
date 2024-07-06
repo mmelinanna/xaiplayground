@@ -236,7 +236,6 @@ def create_model(train_df, test_df, model_selection):
 
 
 def update_model_(split_ind=60, model_selection="SARIMAX"):
-    print('button clicked.')
     model_selection_index = radio_group_models.active
     model_selection = model_selection_dict[model_selection_index]
     print(model_selection)
