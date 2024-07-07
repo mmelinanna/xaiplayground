@@ -373,8 +373,8 @@ picker = ColorPicker(title="BG_Color_Core")
 # -----------------------------------------------FINALIZE LAYOUT CURRENT_DOC--------------------------------------------#
 
 
-# bokeh serve --show Synth_data_app.py
-# bokeh serve Synth_data_app.py --dev                        <---DEV-mode
+# bokeh serve --show Synth_data_app001.py
+# bokeh serve Synth_data_app001.py --dev                        <---DEV-mode
 # http://localhost:5006/Synth_data_app
 
 curdoc().title = "Synthetic data"
@@ -393,7 +393,7 @@ slider_menu_layout_annot = column(slope_with_annot, amplitude_with_annot, phase_
 button_row = row(button, button2, align="center")
 model_first_selection_row = row(model1_text,radio_group_models, styles={"background-color":"rgba(255,127,14,0.8)", "border-radius":"6px"}, align="center") 
 model_second_selection_row = row(model2_text, radio_group_models2, styles={"background-color":"#ae1272", "border-radius":"6px"}, align="center")
-model_selection_row= row(model_first_selection_row, model_second_selection_row, align="center")
+#model_selection_row= row(model_first_selection_row, model_second_selection_row, align="center")
 #model_selection_interface = column(model_selection_row, train_test_split_slider, button_row, line_thickness, sizing_mode="stretch_width", align="center")
 model_selection_interface = column(radio_group_models, train_test_split_slider, button_row, line_thickness, sizing_mode="stretch_width", align="center")
 core_row_layout = row(config_col, slider_menu_layout, data_table, model_selection_interface, config_col_2 , align="center", margin=0,

@@ -183,13 +183,17 @@ for widget_ in [offset,slope, amplitude, phase, freq]:
 y_train_CDS = ColumnDataSource({"time":[], "value": []})
 y_test_CDS = ColumnDataSource({"time":[],"value":[]})
 y_pred_CDS = ColumnDataSource({"time": [],"lower_y": [], "upper_y": [],"predictions":[]})
+y_pred_second_CDS = ColumnDataSource({"time": [],"lower_y": [], "upper_y": [],"predictions":[]})
 
 plot_2 = figure(min_width=MIN_WIDTH, max_width=1800, height=MAIN_FIG_HEIGHT, width_policy="max", title="Synthetic time series prediction",
               tools="pan,reset,save,xwheel_zoom", margin=(-1, 0, 0, 0), background_fill_color=BACKGROUND_C, border_fill_color=BORDER_C,
                min_border_left=70, min_border_right=60, x_range=plot.x_range, y_range=[-7, 25], align="center")
 train_data_glyph=plot_2.line('time', 'value', source=y_train_CDS, line_width=2.5, line_alpha=0.8, legend_label="train_data")
-test_data_glyph=plot_2.line('time', 'value', source=y_test_CDS, line_width=2.5, line_alpha=0.8, line_color="#2ca02c", legend_label="test_data")
-pred_data_glyph=plot_2.line('time', 'predictions', source=y_pred_CDS, line_width=2.5, line_alpha=0.9, line_color="#ff7f0e", line_dash="dashdot", legend_label="model_prediction")
+test_data_glyph=plot_2.line('time', 'value', source=y_test_CDS, line_width=2.5, line_alpha=0.7, line_color="#2ca02c", legend_label="test_data")
+pred_data_glyph=plot_2.line('time', 'predictions', source=y_pred_CDS, line_width=2.5, line_alpha=0.9, line_color="#ff7f0e", line_dash="dashdot",
+                             legend_label="model_prediction_M1")
+pred_data_second_glyph=plot_2.line('time', 'predictions', source=y_pred_second_CDS, line_width=2.5, line_alpha=0.8, line_color="#982764",
+                             line_dash="dashdot", legend_label="model_prediction_M2")
 plot_2.legend.location = "top_left"
 plot_2.legend.background_fill_alpha = 0.8
 plot_2.xaxis.axis_label = "time"
@@ -255,8 +259,9 @@ def create_model(train_df, test_df, model_selection):
     return current_model, y_pred_df
 
 
-def update_model_(split_ind=60, model_selection="SARIMAX"):
+def update_model_(split_ind=60, model_selection="SARIMAX", model_selection_2=None):
     model_selection_index = radio_group_models.active
+    model_selection_second_index = radio_group_models2.active
     model_selection = model_selection_dict[model_selection_index]
     print(model_selection)
     if train_test_split_slider.value is not None:
@@ -266,7 +271,16 @@ def update_model_(split_ind=60, model_selection="SARIMAX"):
     
     ####---> GO INTO MODEL FUNC, RETURN:(train_df, test_df, pred_df)
     current_model, pred_df = create_model(train_df=train_df, test_df=test_df, model_selection=model_selection)
-
+    if model_selection_second_index is not None:
+        model_selection_2 = model_selection_dict[model_selection_second_index]
+        print(model_selection_2)
+        current_model_2, pred_df_2 = create_model(train_df=train_df, test_df=test_df, model_selection=model_selection_2)
+        y_pred_second_CDS.data = ({"time": pred_df_2.index,
+                        "lower_y": pred_df_2.loc[:,"lower values"].values,
+                        "upper_y": pred_df_2.loc[:,"upper values"].values,
+                        "predictions": pred_df_2.loc[:,"Predictions"].values})
+    else:
+        print("\n\n!-----------model_selection_2 is currently not set.-----------------!\n\n\n\n")
 
     y_train_CDS.data = ({"time": train_df["time"],
                         "value": train_df["values"]})
@@ -361,6 +375,7 @@ radio_group_models.js_on_event('button_click', CustomJS(code="""
     console.log('radio_group: active=' + this.origin.active, this.toString())
 """))
 radio_group_models.on_change("active", radio_handler)
+radio_group_models2.on_change("active", radio_handler)
 #radio_group_models.js_on_change("change:active", SetValue(button, "label", "Apply XY"))
 #radio_group_models.on_event("button_click", radio_handler)
 
@@ -373,8 +388,8 @@ picker = ColorPicker(title="BG_Color_Core")
 # -----------------------------------------------FINALIZE LAYOUT CURRENT_DOC--------------------------------------------#
 
 
-# bokeh serve --show Synth_data_app.py
-# bokeh serve Synth_data_app.py --dev                        <---DEV-mode
+# bokeh serve --show Synth_data_app_002.py
+# bokeh serve Synth_data_app_002.py --dev                        <---DEV-mode
 # http://localhost:5006/Synth_data_app
 
 curdoc().title = "Synthetic data"
@@ -385,6 +400,7 @@ freq_with_annot = row(freq, help_slope, align="center")
 noise_with_annot = row(noise, help_slope, align="center")
 
 space=Spacer(height=300, sizing_mode="stretch_width")
+space_2=Spacer(width=2)
 config_col = column(C, O, N, F, I, G, width=40, align="center", styles={"border-radius": "5px", "margin-right":"40px"})
 config_col_2 = column(C, O, N, F, I, G, width=40, align="center", styles={"margin-left":"50px", "margin-right":"-20px"}) 
 slider_menu_layout = column(slope_with_annot, amplitude, offset, freq, noise, sizing_mode="stretch_width")
@@ -392,14 +408,12 @@ slider_menu_layout_annot = column(slope_with_annot, amplitude_with_annot, phase_
                                    noise_with_annot, sizing_mode="stretch_width")
 button_row = row(button, button2, align="center")
 model_first_selection_row = row(model1_text,radio_group_models, styles={"background-color":"rgba(255,127,14,0.8)", "border-radius":"6px"}, align="center") 
-model_second_selection_row = row(model2_text, radio_group_models2, styles={"background-color":"#ae1272", "border-radius":"6px"}, align="center")
-model_selection_row= row(model_first_selection_row, model_second_selection_row, align="center")
-#model_selection_interface = column(model_selection_row, train_test_split_slider, button_row, line_thickness, sizing_mode="stretch_width", align="center")
-model_selection_interface = column(radio_group_models, train_test_split_slider, button_row, line_thickness, sizing_mode="stretch_width", align="center")
+model_second_selection_row = row(model2_text, radio_group_models2, styles={"background-color":"rgba(152,39,100,0.8)", "border-radius":"6px"}, align="center")
+model_selection_row= row(model_first_selection_row, space_2, model_second_selection_row, align="center")
+model_selection_interface = column(model_selection_row, train_test_split_slider, button_row, line_thickness, sizing_mode="stretch_width", align="center")
 core_row_layout = row(config_col, slider_menu_layout, data_table, model_selection_interface, config_col_2 , align="center", margin=0,
                       styles={'font-size': "1.5rem","background-color": "#EEEAE9", "border-radius":"15px", "padding": "10px 10px 10px 10px",
-                             # "border-style":"dotted",
-                               "border-width":"2.5px"}, sizing_mode="stretch_width")
+                                 "border-style":"dotted", "border-width":"2.5px"}, sizing_mode="stretch_width")
 core_row_layout_border = row(core_row_layout, styles={"background-color": BORDER_C, "padding":"0px 100px 0px 100px"},
                               sizing_mode="stretch_width", align="center")
 bottom_row = row(date_range_slider, styles={"background_color": BORDER_C}, align="center") # sizing_mode is incompatible with alignment centered
