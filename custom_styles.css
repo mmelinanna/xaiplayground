@@ -1,0 +1,28 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap');
+
+
+:host *  { margin: -50px;
+    padding: 0px;
+    }
+
+:host * {background-color: "#F7F0DE";}
+
+:host {
+    font-family: 'Roboto', sans-serif;
+    background-color: "#F7F0DE";
+}
+
+:host body {
+    font-family: 'Roboto', sans-serif;
+    background-color: "#F7F0DE";
+}
+
+h1, h2 {
+    font-family: 'Roboto', sans-serif;
+    color: #2A6496;
+}
+
+p {
+    font-family: 'Roboto', sans-serif;
+    color: #555;
+}

@@ -4,6 +4,9 @@ import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.metrics import mean_absolute_error
 from xgboost import XGBRegressor
+from sklearn.preprocessing import MinMaxScaler
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv1D, Dense, Flatten
 
 
 
@@ -71,8 +74,37 @@ def xgboost_initial(train):
 	current_model.fit(trainX, trainy)
 	return current_model
 
+def cnn_initial(train):
+    train_ = np.asarray(train)
+    X_train, y_train = train_[:, :-1], train_[:, -1]
+    X_train = X_train.reshape((X_train.shape[0], X_train.shape[1], 1))
+
+    window_size = X_train.shape[1]
+    current_model = Sequential([
+        Conv1D(filters=64, kernel_size=2, activation='relu', input_shape=(window_size, 1)),
+        Flatten(),
+        Dense(50, activation='relu'),
+        Dense(1)
+    ])
+
+    current_model.compile(optimizer='adam', loss='mse')
+    current_model.fit(X_train, y_train, epochs=200, verbose=0)
+    return current_model
+
+
 
 def walk_forward_validation_historic(data, test_set_len, model_selection):
+	"""
+	Arguments:
+		data: Sequence of observations as a list or NumPy array.
+		test_set_len: Number of test set observations
+		model_selection: String from ["RF","XGB","CNN"]
+	Returns:
+		current_model:
+		error: 
+		test_label: returns the test labels (real values) for the test sequence via 
+		prediction_array: returns all prediction via python list
+	"""
 	prediction_list = list()
 	train_data, test_data = train_test_split(data.values, test_set_len) #receives np.array (df.values) 90x5 -> returns df 60x5, 30x5
 	print("data_shape: "+ str(data.shape))
@@ -80,11 +112,19 @@ def walk_forward_validation_historic(data, test_set_len, model_selection):
 	print(test_data.shape)
 	if model_selection=="RF":
 		current_model = random_forest_initial(train_data)
-	else:
+	elif model_selection=="XGB":
 		current_model = xgboost_initial(train_data)
+	elif model_selection=="CNN":
+		current_model = cnn_initial(train_data)
+		print("SUCCESS CNN")
+	
 	for i in range(len(test_data)):
 		testX, testy = test_data[i, :-1], test_data[i, -1]      #--> 1x5; 1x1 from 30x5, 30x1
-		y_pred= current_model.predict([testX])
+		if model_selection=="CNN":
+			testX = testX.reshape((1, 6, 1))
+			y_pred=current_model.predict(testX)
+		else:
+			y_pred= current_model.predict([testX])
 		prediction_list.append(y_pred[0])	
 		print('>expected=%.1f, predicted=%.1f' % (testy, y_pred[0]))
 
@@ -116,15 +156,7 @@ def random_forest_forecast(train, testX):
 
 
 def walk_forward_validation_online(data, test_set_len):
-	"""
-	Arguments:
-		data: Sequence of observations as a list or NumPy array.
-		test_set_len: Number of test set observations
-	Returns:
-		error: 
-		test_label: returns the test labels (real values) for the test sequence via 
-		prediction_array: returns all prediction via python list
-	"""
+
 	prediction_list = list()
 	train_data, test_data = train_test_split(data, test_set_len)
 	history = [x for x in train_data]     #--> initial: 60x6 

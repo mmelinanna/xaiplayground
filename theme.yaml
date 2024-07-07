@@ -3,7 +3,7 @@ attrs:
         background_fill_color: "gainsboro"
         outline_line_color: "white"
         toolbar_location: "right"
-        min_border: 20
+        min_border: 30
     
     Grid:
         grid_line_dash: [6, 4]
