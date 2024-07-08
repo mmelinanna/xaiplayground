@@ -333,7 +333,7 @@ data_table = DataTable(source=source, columns=columns, height=250, editable=True
 
 
 # -----------------------------------------------CURRENT_DOC REFRESHMENT--------------------------------------------#
-button = Button(label="Apply Model", button_type="success", align="center")
+button = Button(label="Apply Model", button_type="su", align="center")
 button2 = Button(label="Reset Model", button_type="success", align="center")
 button2.js_on_event("button_click", SetValue(button, "label", "Apply Model"))
 
@@ -374,7 +374,7 @@ picker = ColorPicker(title="BG_Color_Core")
 
 
 # bokeh serve --show Synth_data_app001.py
-# bokeh serve Synth_data_app001.py --dev                        <---DEV-mode
+# bokeh serve Synth_data_app_001.py --dev                        <---DEV-mode
 # http://localhost:5006/Synth_data_app
 
 curdoc().title = "Synthetic data"

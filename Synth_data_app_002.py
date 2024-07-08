@@ -6,7 +6,7 @@ from datetime import datetime, date
 
 from bokeh.io import curdoc, show
 from bokeh.layouts import column, row
-from bokeh.models import ColumnDataSource, Slider, TextInput, DateRangeSlider, HelpButton, Tooltip, DataTable
+from bokeh.models import ColumnDataSource, Slider, TextInput, DateRangeSlider, HelpButton, Tooltip, DataTable, WheelZoomTool
 from bokeh.models import NumberFormatter, TableColumn, RadioGroup, Button, CustomJS, SetValue, Div, ColorPicker, Spacer
 from bokeh.plotting import figure
 from bokeh.models.dom import HTML
@@ -26,14 +26,14 @@ from xgboost import XGBRegressor
 
 #CONSTANTS
 MAX_WIDTH_SLIDERS=600
-BACKGROUND_C= "#fff"
+BACKGROUND_C= "#fefefe"
 BORDER_C= "#F7F0DE"   #"white" #   "#F0F0AA"
 CONFIG_ROW_C = "#FFF"
 BLUE_C= "#125779"
 LIGHT_BROWN = "#B7AB87"
 LIGHT_GREY="#BFB8A7"
 DATASET_LENGTH=90
-MAIN_FIG_HEIGHT=340
+MAIN_FIG_HEIGHT=320
 MIN_WIDTH=400
 MODEL_OPTIONS=["SARIMAX", "RF_REGR", "1D-CNN", "XGBOOST"]
 
@@ -118,7 +118,7 @@ plot.legend.location = "top_left"
 plot.legend.background_fill_alpha = 0.8
 plot.xaxis.axis_label = "time"
 plot.yaxis.axis_label = "value"
-plot.toolbar.active_scroll = "auto"
+plot.toolbar.active_scroll = plot.select_one(WheelZoomTool)
 
 
 text = TextInput(title="title", value='Synthetic Time Series fancy')
@@ -189,16 +189,19 @@ plot_2 = figure(min_width=MIN_WIDTH, max_width=1800, height=MAIN_FIG_HEIGHT, wid
               tools="pan,reset,save,xwheel_zoom", margin=(-1, 0, 0, 0), background_fill_color=BACKGROUND_C, border_fill_color=BORDER_C,
                min_border_left=70, min_border_right=60, x_range=plot.x_range, y_range=[-7, 25], align="center")
 train_data_glyph=plot_2.line('time', 'value', source=y_train_CDS, line_width=2.5, line_alpha=0.8, legend_label="train_data")
-test_data_glyph=plot_2.line('time', 'value', source=y_test_CDS, line_width=2.5, line_alpha=0.7, line_color="#2ca02c", legend_label="test_data")
+test_data_glyph=plot_2.line('time', 'value', source=y_test_CDS, line_width=2.5, line_alpha=0.7, line_color="#2ca02c", legend_label="test_data",
+                            muted_color="#2ca02c", muted_alpha=0.2)
 pred_data_glyph=plot_2.line('time', 'predictions', source=y_pred_CDS, line_width=2.5, line_alpha=0.9, line_color="#ff7f0e", line_dash="dashdot",
-                             legend_label="model_prediction_M1")
+                             legend_label="model_prediction_M1", muted_color="#ff7f0e", muted_alpha=0.2)
 pred_data_second_glyph=plot_2.line('time', 'predictions', source=y_pred_second_CDS, line_width=2.5, line_alpha=0.8, line_color="#982764",
-                             line_dash="dashdot", legend_label="model_prediction_M2")
+                             line_dash="dashdot", legend_label="model_prediction_M2", muted_color="#982764", muted_alpha=0.2)
 plot_2.legend.location = "top_left"
 plot_2.legend.background_fill_alpha = 0.8
+plot_2.legend.click_policy="mute"
 plot_2.xaxis.axis_label = "time"
 plot_2.yaxis.axis_label = "value"
-plot_2.toolbar.active_scroll = "auto"
+plot_2.toolbar.active_scroll = plot_2.select_one(WheelZoomTool)
+
 
 
 # Include own modules and functions
@@ -343,7 +346,7 @@ columns = [
         TableColumn(field="synthetic_data", title="value", formatter=NumberFormatter(format="0.0000")),
     ]
 
-data_table = DataTable(source=source, columns=columns, height=250, editable=True, align="center", margin=(0,40,0,65), sizing_mode="stretch_width")
+data_table = DataTable(source=source, columns=columns, height=230, editable=True, align="center", margin=(0,40,0,65), sizing_mode="stretch_width")
 
 
 # -----------------------------------------------CURRENT_DOC REFRESHMENT--------------------------------------------#
@@ -412,12 +415,14 @@ model_second_selection_row = row(model2_text, radio_group_models2, styles={"back
 model_selection_row= row(model_first_selection_row, space_2, model_second_selection_row, align="center")
 model_selection_interface = column(model_selection_row, train_test_split_slider, button_row, line_thickness, sizing_mode="stretch_width", align="center")
 core_row_layout = row(config_col, slider_menu_layout, data_table, model_selection_interface, config_col_2 , align="center", margin=0,
-                      styles={'font-size': "1.5rem","background-color": "#EEEAE9", "border-radius":"15px", "padding": "10px 10px 10px 10px",
-                                 "border-style":"dotted", "border-width":"2.5px"}, sizing_mode="stretch_width")
-core_row_layout_border = row(core_row_layout, styles={"background-color": BORDER_C, "padding":"0px 100px 0px 100px"},
+                      styles={'font-size': "1.5rem","background-color": "#F4F4F4", "border-radius":"15px", "padding": "10px 10px 10px 10px",
+                                "border-style":"solid", "border-width":"2.0px"}, sizing_mode="stretch_width")
+core_row_layout_border = row(core_row_layout, styles={"background-color": BORDER_C, "padding":"8px 100px 8px 100px"},
                               sizing_mode="stretch_width", align="center")
 bottom_row = row(date_range_slider, styles={"background_color": BORDER_C}, align="center") # sizing_mode is incompatible with alignment centered
 final_layout = column(plot, core_row_layout_border, plot_2, sizing_mode="stretch_width")
+
+#EEEAE9
 
 model_selection_interface.styles["background-color"] ="ff7f0e"
 cd = curdoc()
