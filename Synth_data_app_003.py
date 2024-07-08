@@ -311,6 +311,29 @@ the slope represents the general trend of the time series.<br /> It determines t
 in y over a period of time.<br/>More information: <a href="https://en.wikipedia.org/wiki/Slope">slope</a>!
 """), position="right"), align="center")
 
+help_noise = HelpButton(tooltip=Tooltip(content=HTML("""
+Noise in time series data refers to the <b> random variations and fluctuations </b> that are not part of 
+the underlying pattern or signal. <br/>More information: <a href="https://en.wikipedia.org/wiki/Noise_(signal_processing)">noise</a>!
+"""), position="right"), align="center")
+
+help_amplitude = HelpButton(tooltip=Tooltip(content=HTML("""
+Amplitude refers to the measure of change in a periodic variable within a single period. 
+In the context of time series data, the amplitude represents <b>the height of the peaks or the depth of the troughs </b> relative to the central value
+<br/>More information: <a href="https://en.wikipedia.org/wiki/Amplitude">amplitude</a>!
+"""), position="right"), align="center")
+
+help_offset = HelpButton(tooltip=Tooltip(content=HTML("""
+An offset in time series data represents a constant component that <b>shifts the entire 
+series up or down on the y-axis </b>. It is essentially a baseline level from which the values of the series are measured
+the slope represents the general trend of the time series.
+<br/>More information: <a href="https://baresquare.com/blog/decoding-time-series-an-in-depth-look-at-definitions-types-and-challenges">offset</a>!
+"""), position="right"), align="center")
+
+help_freq = HelpButton(tooltip=Tooltip(content=HTML("""
+Frequency in time series data refers to the number of occurrences of a <b> repeating event per unit of time</b>. </br>
+It indicates how often a particular pattern or cycle repeats within a specified timeframe.<br/>More information: <a href="https://en.wikipedia.org/wiki/Frequency">frequency</a>!
+"""), position="right"), align="center")
+
 
 # Read the custom CSS from an external file
 with open('custom_styles.css', 'r') as css_file:
