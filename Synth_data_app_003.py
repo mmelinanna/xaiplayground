@@ -115,7 +115,7 @@ synthetic_data.round(decimals=4)
 
 plot = figure(min_width=MIN_WIDTH, max_width=MAX_WIDTH, height=MAIN_FIG_HEIGHT, width_policy="max", title="Synthetic time series",
               tools="pan,reset,save, xwheel_zoom", margin=(0, 0, -1, 0), background_fill_color=BACKGROUND_C, min_border=30,
-              border_fill_color=BORDER_C, styles={"padding-righ":"300", "border-right":"300px", "padding-top":"50px", "margin-top":"50px"},
+              border_fill_color=BORDER_C, styles={"padding-righ":"300", "border-right":"300px"},
             min_border_right=60, min_border_left=70, x_range=[0, 89], y_range=[-7, 25], align="center")
 
 
@@ -536,6 +536,7 @@ noise_with_annot = row(noise, help_slope, align="center")
 
 space=Spacer(height=300, sizing_mode="stretch_width")
 space_2=Spacer(width=5)
+space_3=Spacer(width=50)
 config_col = column(C, O, N, F, I, G, width=40, align="center", styles={"border-radius": "5px", "margin-right":"40px"})
 config_col_2 = column(C, O, N, F, I, G, width=40, align="center", styles={"margin-left":"50px", "margin-right":"-20px"}) 
 slider_menu_layout = column(slope_with_annot, amplitude, offset, freq, noise, sizing_mode="stretch_width")
@@ -552,13 +553,12 @@ core_row_layout = row(config_col, slider_menu_layout, data_table, model_selectio
 core_row_layout_border = row(core_row_layout, styles={"background-color": BORDER_C, "padding":"8px 100px 8px 100px"},
                               sizing_mode="stretch_width", align="center")
 bottom_row = row(date_range_slider, styles={"background_color": BORDER_C}, align="center") # sizing_mode is incompatible with alignment centered
-#row_bottom = row(button3, styles={"background_color": BORDER_C}, align="center")
-XAI_column = column(X,A,I_, width=40, align="center")
-XAI_button_column = column(button3, XAI_column, align="center")
-shapley_row = row(plot_3, XAI_button_column, plot_4,
-                   styles={"background_color": BORDER_C, "margin_bottom":"-100px", "padding":"30px 0px 100px 0px"}, sizing_mode="stretch_width")
-#column_bottom = column(row_bottom, sizing_mode="stretch_width", styles={"background_color": BORDER_C})
-final_layout = column(plot, core_row_layout_border, plot_2, shapley_row, sizing_mode="stretch_width")
+row_bottom = row(button3, styles={"background_color": BORDER_C, "padding":"10px 0px 0px 0px"}, align="center")
+#XAI_column = column(X,A,I_, width=40, align="center")
+#XAI_button_column = column(button3, XAI_column, align="center")
+shapley_row = row(plot_3, space_3,plot_4, styles={"background_color": BORDER_C, "margin_bottom":"-100px", "padding":"15px 0px 100px 0px"}, sizing_mode="stretch_width")
+column_bottom = column(row_bottom, sizing_mode="stretch_width", styles={"background_color": BORDER_C})
+final_layout = column(plot, core_row_layout_border, plot_2, column_bottom, shapley_row, sizing_mode="stretch_width") 
 
 #EEEAE9
 
