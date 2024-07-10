@@ -6,13 +6,15 @@ from datetime import datetime, date
 
 from bokeh.io import curdoc, show
 from bokeh.layouts import column, row
-from bokeh.models import ColumnDataSource, Slider, TextInput, DateRangeSlider, HelpButton, Tooltip, DataTable, WheelZoomTool
-from bokeh.models import NumberFormatter, TableColumn, RadioGroup, Button, CustomJS, SetValue, Div, ColorPicker, Spacer
+from bokeh.models import ColumnDataSource, Slider, TextInput, DateRangeSlider, HelpButton, Tooltip, DataTable
+from bokeh.models import NumberFormatter, TableColumn, RadioGroup, Button, CustomJS, SetValue, Div, ColorPicker
+from bokeh.models import Label, Spacer, Range1d, WheelZoomTool, LabelSet
 from bokeh.plotting import figure
 from bokeh.models.dom import HTML
 from bokeh.themes import Theme
 from bokeh.palettes import Spectral6
 from bokeh.settings import settings
+from bokeh.events import ButtonClick
 
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 from sklearn.ensemble import RandomForestRegressor
@@ -22,6 +24,8 @@ from sklearn.preprocessing import MinMaxScaler
 
 from statsmodels.tsa.arima.model import ARIMA
 from xgboost import XGBRegressor
+
+import shap
 
 
 #CONSTANTS
@@ -35,7 +39,10 @@ LIGHT_GREY="#BFB8A7"
 DATASET_LENGTH=90
 MAIN_FIG_HEIGHT=320
 MIN_WIDTH=400
+MAX_WIDTH=2500
 MODEL_OPTIONS=["SARIMAX", "RF_REGR", "1D-CNN", "XGBOOST"]
+M1_COLOR = "#ff7f0e"
+M2_COLOR = "#982764"
 
 settings.default_server_port = 5007
 
@@ -106,10 +113,10 @@ synthetic_data.round(decimals=4)
 
 #-----------------------------------------------BASIC BOKEH IMPLEMENTATION-------------------------------------------#
 
-plot = figure(min_width=MIN_WIDTH, max_width=1800, height=MAIN_FIG_HEIGHT, width_policy="max", title="Synthetic time series",
+plot = figure(min_width=MIN_WIDTH, max_width=MAX_WIDTH, height=MAIN_FIG_HEIGHT, width_policy="max", title="Synthetic time series",
               tools="pan,reset,save, xwheel_zoom", margin=(0, 0, -1, 0), background_fill_color=BACKGROUND_C, min_border=30,
-              border_fill_color=BORDER_C, styles={"padding-righ":"300", "border-right":"300px"}, min_border_right=60,
-              min_border_left=70, x_range=[0, 89], y_range=[-7, 25], align="center")
+              border_fill_color=BORDER_C, styles={"padding-righ":"300", "border-right":"300px", "padding-top":"50px", "margin-top":"50px"},
+            min_border_right=60, min_border_left=70, x_range=[0, 89], y_range=[-7, 25], align="center")
 
 
 source = ColumnDataSource(data=dict(time=synthetic_data.index, synthetic_data=synthetic_data.values))
@@ -118,7 +125,6 @@ plot.legend.location = "top_left"
 plot.legend.background_fill_alpha = 0.8
 plot.xaxis.axis_label = "time"
 plot.yaxis.axis_label = "value"
-plot.toolbar.active_scroll = plot.select_one(WheelZoomTool)
 
 
 text = TextInput(title="title", value='Synthetic Time Series fancy')
@@ -184,24 +190,55 @@ y_train_CDS = ColumnDataSource({"time":[], "value": []})
 y_test_CDS = ColumnDataSource({"time":[],"value":[]})
 y_pred_CDS = ColumnDataSource({"time": [],"lower_y": [], "upper_y": [],"predictions":[]})
 y_pred_second_CDS = ColumnDataSource({"time": [],"lower_y": [], "upper_y": [],"predictions":[]})
+feature_default = ["var1(t-n)", "var1(...)", "var1(t-2)", "var1(t-1)", "var1(t)"]
+shap_default = [0,0,0,0,0]
+shap_label_default = ["Calculating shap values...","Calculating shap values...","Calculating shap values...", "Calculating shap values...","Calculating shap values..."]
+shapley_CDS = ColumnDataSource({"features": feature_default, "shap_values":shap_default,"shap_values_formatted":[" "," "," "," "," "]})
+shapley_CDS_M2 =ColumnDataSource({"features": feature_default, "shap_values":shap_default,"shap_values_formatted":[" "," "," "," "," "]})
 
-plot_2 = figure(min_width=MIN_WIDTH, max_width=1800, height=MAIN_FIG_HEIGHT, width_policy="max", title="Synthetic time series prediction",
+plot_2 = figure(min_width=MIN_WIDTH, max_width=MAX_WIDTH, height=MAIN_FIG_HEIGHT, width_policy="max", title="Synthetic time series prediction",
               tools="pan,reset,save,xwheel_zoom", margin=(-1, 0, 0, 0), background_fill_color=BACKGROUND_C, border_fill_color=BORDER_C,
                min_border_left=70, min_border_right=60, x_range=plot.x_range, y_range=[-7, 25], align="center")
 train_data_glyph=plot_2.line('time', 'value', source=y_train_CDS, line_width=2.5, line_alpha=0.8, legend_label="train_data")
 test_data_glyph=plot_2.line('time', 'value', source=y_test_CDS, line_width=2.5, line_alpha=0.7, line_color="#2ca02c", legend_label="test_data",
                             muted_color="#2ca02c", muted_alpha=0.2)
-pred_data_glyph=plot_2.line('time', 'predictions', source=y_pred_CDS, line_width=2.5, line_alpha=0.9, line_color="#ff7f0e", line_dash="dashdot",
-                             legend_label="model_prediction_M1", muted_color="#ff7f0e", muted_alpha=0.2)
-pred_data_second_glyph=plot_2.line('time', 'predictions', source=y_pred_second_CDS, line_width=2.5, line_alpha=0.8, line_color="#982764",
-                             line_dash="dashdot", legend_label="model_prediction_M2", muted_color="#982764", muted_alpha=0.2)
+pred_data_glyph=plot_2.line('time', 'predictions', source=y_pred_CDS, line_width=2.5, line_alpha=0.9, line_color=M1_COLOR, line_dash="dashdot",
+                             legend_label="model_prediction_M1", muted_color=M1_COLOR, muted_alpha=0.2)
+pred_data_second_glyph=plot_2.line('time', 'predictions', source=y_pred_second_CDS, line_width=2.5, line_alpha=0.8, line_color=M2_COLOR,
+                             line_dash="dashdot", legend_label="model_prediction_M2", muted_color=M2_COLOR, muted_alpha=0.2)
 plot_2.legend.location = "top_left"
 plot_2.legend.background_fill_alpha = 0.8
 plot_2.legend.click_policy="mute"
 plot_2.xaxis.axis_label = "time"
 plot_2.yaxis.axis_label = "value"
-plot_2.toolbar.active_scroll = plot_2.select_one(WheelZoomTool)
+#plot.toolbar.active_scroll = plot.select_one(WheelZoomTool)
+#plot_2.toolbar.active_scroll = plot_2.select_one(WheelZoomTool)  --->default Activ Scroll OFF
 
+
+plot_3 = figure(min_width=MIN_WIDTH, max_width=MAX_WIDTH, height=MAIN_FIG_HEIGHT+100, width_policy="max", margin=(-1, 0, 0, 0),
+                 background_fill_color=BACKGROUND_C, border_fill_color=BORDER_C, min_border_left=70, min_border_right=0,
+                   align="center", y_range=shapley_CDS.data["features"], x_range=[0,1.5], 
+                title="Mean SHAP Values M1", toolbar_location=None)
+plot_4 = figure(min_width=MIN_WIDTH, max_width=MAX_WIDTH, height=MAIN_FIG_HEIGHT+100, width_policy="max", margin=(-1, 0, 0, 0),
+                 background_fill_color=BACKGROUND_C, border_fill_color=BORDER_C, min_border_left=40, min_border_right=60,
+                   align="center", y_range=shapley_CDS_M2.data["features"], x_range=[0,1.5], 
+                title="Mean SHAP Values M2", toolbar_location=None)
+
+plot_3.hbar(y='features', right='shap_values', height=0.7, source=shapley_CDS,line_color="#ff7f0e", fill_color='#ff7f0e', alpha=0.8,
+             hatch_pattern="/", hatch_alpha=1.0, hatch_color="black")
+plot_4.hbar(y='features', right='shap_values', height=0.7, source=shapley_CDS_M2,line_color=M2_COLOR, fill_color=M2_COLOR, alpha=0.7,
+             hatch_pattern="/", hatch_alpha=1.0, hatch_color="black")
+plot_4.xaxis.axis_label = r"\(mean(|SHAP value|)\)"
+plot_3.xaxis.axis_label = r"\(mean(|SHAP value|)\)"
+plot_3.xgrid.grid_line_color = None
+plot_4.xgrid.grid_line_color = None
+
+labels_M1 = LabelSet(x='shap_values', y='features', text='shap_values_formatted', level='annotation',
+                     x_offset=6, y_offset=-7, source=shapley_CDS, text_color='red')
+labels_M2 = LabelSet(x='shap_values', y='features', text='shap_values_formatted', level='annotation',
+                     x_offset=6, y_offset=-7, source=shapley_CDS_M2, text_color='red')
+plot_3.add_layout(labels_M1)
+plot_4.add_layout(labels_M2)
 
 
 # Include own modules and functions
@@ -220,6 +257,7 @@ def create_model(train_df, test_df, model_selection, input_laggs=6):
         y_pred_df = y_pred.conf_int(alpha = 0.05) 
         y_pred_df["Predictions"] = current_model.predict(start = y_pred_df.index[0], end = y_pred_df.index[-1])
         y_pred_df.index = test_df["time"]
+        tsl=None
         print(y_pred_df)
         y_pred_out = y_pred_df["Predictions"] 
         #current_model.plot_diagnostics(figsize=(16, 8))
@@ -232,7 +270,6 @@ def create_model(train_df, test_df, model_selection, input_laggs=6):
         y_pred_df = pd.DataFrame(data={"Predictions":y_pred, "lower values":y_pred, "upper values":y_pred})
         y_pred_df.index = test_df["time"]
         print(y_pred_df)
-        ##TODO very much --> not so much anymore
 
 
     elif model_selection=="1D-CNN":
@@ -243,7 +280,7 @@ def create_model(train_df, test_df, model_selection, input_laggs=6):
         #tsl = time_series_lagger(values_scaled, n_in=6, n_out=1, dropnan=True)
         print("tsl_cnn:")
         print(tsl)
-        current_model, mae, y, y_pred = walk_forward_validation_historic(tsl, test_df.shape[0], model_selection="CNN")
+        current_model, mae, y, y_pred = walk_forward_validation_historic(tsl, test_df.shape[0], model_selection="CNN", input_laggs=10)
         y_pred_df = pd.DataFrame(data={"Predictions":y_pred, "lower values":y_pred, "upper values":y_pred})
         y_pred_df.index = test_df["time"]
         print("Mean_Absolute_Error_CNN: "+ str(mae))
@@ -259,9 +296,12 @@ def create_model(train_df, test_df, model_selection, input_laggs=6):
         print(y_pred_df)
 
 
-    return current_model, y_pred_df
+    return current_model, y_pred_df, tsl
 
 
+current_model_1 = {"M1":1}
+current_model_2 = {"M2":2}
+datasets_tsl = {"M1":None, "M2":None}
 def update_model_(split_ind=60, model_selection="SARIMAX", model_selection_2=None):
     model_selection_index = radio_group_models.active
     model_selection_second_index = radio_group_models2.active
@@ -273,11 +313,15 @@ def update_model_(split_ind=60, model_selection="SARIMAX", model_selection_2=Non
     test_df = pd.DataFrame(data={"time": source.data["time"][split_ind:], "values": source.data["synthetic_data"][split_ind:]})
     
     ####---> GO INTO MODEL FUNC, RETURN:(train_df, test_df, pred_df)
-    current_model, pred_df = create_model(train_df=train_df, test_df=test_df, model_selection=model_selection, input_laggs=10)
+    current_model_1[model_selection], pred_df, datasets_tsl["M1"] = create_model(train_df=train_df, test_df=test_df,
+                                                                                  model_selection=model_selection, input_laggs=10)
+    
     if model_selection_second_index is not None:
         model_selection_2 = model_selection_dict[model_selection_second_index]
         print(model_selection_2)
-        current_model_2, pred_df_2 = create_model(train_df=train_df, test_df=test_df, model_selection=model_selection_2)
+        current_model_2[model_selection_2], pred_df_2, datasets_tsl["M2"] = create_model(train_df=train_df, test_df=test_df,
+                                                                                        model_selection=model_selection_2,input_laggs=10)
+        print(current_model_2)
         y_pred_second_CDS.data = ({"time": pred_df_2.index,
                         "lower_y": pred_df_2.loc[:,"lower values"].values,
                         "upper_y": pred_df_2.loc[:,"upper values"].values,
@@ -294,6 +338,64 @@ def update_model_(split_ind=60, model_selection="SARIMAX", model_selection_2=Non
                         "upper_y": pred_df.loc[:,"upper values"].values,
                         "predictions": pred_df.loc[:,"Predictions"].values})
     
+
+# -------------------------------------SHAPLEY IMPLEMENTATION & BOKEH TRANSFORMATION------------------------------------# 
+def calculate_shapleys():
+    print("__INIT_SHAPLEYS__")
+    print(current_model_1.keys())
+    model_selection_index=radio_group_models.active
+    model_selection_second_index=radio_group_models2.active
+    #if "RF_REGR" in current_model_1.keys():
+    if model_selection_dict[model_selection_index] in current_model_1.keys():  #validates if M1 is chosen AND calculated
+        tree_explainer = shap.TreeExplainer(current_model_1[model_selection_dict[model_selection_index]])    
+        feature_names_ = datasets_tsl["M1"].columns[:-1]
+        shap_values = tree_explainer(datasets_tsl["M1"].iloc[:,:-1])
+        temp_dict={"features": [], "shap_values":[],"shap_values_formatted":[]}
+        for i, column_name in enumerate(datasets_tsl["M1"].columns[0:-1]):
+            shapley_absolute_mean = np.mean(np.abs(shap_values.values[:,i]))
+            temp_dict["features"].append(column_name)
+            temp_dict["shap_values"].append(shapley_absolute_mean)
+            temp_dict["shap_values_formatted"].append(f"+{shapley_absolute_mean:.2f}" if shapley_absolute_mean > 0 else f"{shapley_absolute_mean:.2f}")
+        
+        plot_3.x_range.end = np.max(temp_dict["shap_values"])*1.15
+        plot_3.ygrid.grid_line_color = "#e5e5e5"
+        shapley_CDS.data = ({"features":temp_dict["features"],
+                            "shap_values":temp_dict["shap_values"],
+                            "shap_values_formatted":temp_dict["shap_values_formatted"]}) 
+        plot_3.add_layout(labels_M1)
+        plot_3.y_range.factors = temp_dict["features"]
+        print(model_selection_dict[model_selection_second_index])
+        print(current_model_2.keys())
+        print(model_selection_dict[model_selection_second_index] in current_model_2.keys())
+
+    if model_selection_dict[model_selection_second_index] in current_model_2.keys():  
+        print("WE ARE HERE")
+        tree_explainer = shap.TreeExplainer(current_model_2[model_selection_dict[model_selection_second_index]])    
+        feature_names_ = datasets_tsl["M2"].columns[:-1]
+        shap_values = tree_explainer(datasets_tsl["M2"].iloc[:,:-1])
+        print(datasets_tsl["M2"].columns)
+        print("shap_values_succesfully calculated")
+        print("dataset_tsl_column names:")
+        print(datasets_tsl["M2"].columns)
+        temp_dict={"features": [], "shap_values":[],"shap_values_formatted":[]}
+        for i, column_name in enumerate(datasets_tsl["M2"].columns[0:-1]):
+            shapley_absolute_mean = np.mean(np.abs(shap_values.values[:,i]))
+            temp_dict["features"].append(column_name)
+            temp_dict["shap_values"].append(shapley_absolute_mean)
+            temp_dict["shap_values_formatted"].append(f"+{shapley_absolute_mean:.2f}" if shapley_absolute_mean > 0 else f"{shapley_absolute_mean:.2f}")
+        
+        plot_4.x_range.end = np.max(temp_dict["shap_values"])*1.15
+        plot_4.ygrid.grid_line_color = "#e5e5e5"
+        shapley_CDS_M2.data = ({"features":temp_dict["features"],
+                            "shap_values":temp_dict["shap_values"],
+                            "shap_values_formatted":temp_dict["shap_values_formatted"]}) 
+        plot_4.add_layout(labels_M2)
+        plot_4.y_range.factors = temp_dict["features"] 
+    else:
+        print("There is currently no model selected AND/OR instanciated")
+        
+def update_x_range(event):
+    plot_3.x_range.end = 10.0
 
 # DEV_STUFF
 # split_ind=60
@@ -353,6 +455,9 @@ I = Div(text="I", width=40, styles={'font-size': "1.5rem","font-weight":"400"},m
 G = Div(text="G", width=40, styles={'font-size': "1.5rem","font-weight":"400"},margin=(0, 40, 0, 0))
 model1_text = Div(text="M1", styles={"font-size": "2rem", "font-weight":"300"}, align="center")
 model2_text = Div(text="M2", styles={"font-size": "2rem", "font-weight":"300"}, align="center")
+X = Div(text="X",width=100, styles={'font-size': "3rem","font-weight":"400","font-family": "Arial, Helvetica, sans-serif"},margin=(0, 0, 0, 0), align="center")
+A = Div(text="A", styles={'font-size': "3rem","font-weight":"400"},margin=(0, 0, 0, 0), align="center")
+I_ = Div(text="I", styles={'font-size': "3rem","font-weight":"400"},margin=(0, 0, 0, 0), align="center")
 
 
 
@@ -375,11 +480,15 @@ data_table = DataTable(source=source, columns=columns, height=230, editable=True
 # -----------------------------------------------CURRENT_DOC REFRESHMENT--------------------------------------------#
 button = Button(label="Apply Model", button_type="success", align="center")
 button2 = Button(label="Reset Model", button_type="success", align="center")
+button3 = Button(label="Calculate\nShapleys", width=140, button_type="success", align="center")
 button2.js_on_event("button_click", SetValue(button, "label", "Apply Model"))
 
 button.on_click(update_model_)
+button3.on_click(calculate_shapleys)
+#button3.on_click(update_x_range)
+#button3.on_event(ButtonClick, update_x_range)
 button.js_on_event("button_click", CustomJS(code="console.log('button: click!', this.toString())"))
-button.js_on_event("button_click", SetValue(button, "label", "Model applied"))
+#button.js_on_event("button_click", SetValue(button, "label", "Model applied"))
       
      
 for widget_ in [offset,slope, amplitude, phase, freq]:
@@ -426,7 +535,7 @@ freq_with_annot = row(freq, help_slope, align="center")
 noise_with_annot = row(noise, help_slope, align="center")
 
 space=Spacer(height=300, sizing_mode="stretch_width")
-space_2=Spacer(width=4)
+space_2=Spacer(width=5)
 config_col = column(C, O, N, F, I, G, width=40, align="center", styles={"border-radius": "5px", "margin-right":"40px"})
 config_col_2 = column(C, O, N, F, I, G, width=40, align="center", styles={"margin-left":"50px", "margin-right":"-20px"}) 
 slider_menu_layout = column(slope_with_annot, amplitude, offset, freq, noise, sizing_mode="stretch_width")
@@ -434,7 +543,7 @@ slider_menu_layout_annot = column(slope_with_annot, amplitude_with_annot, phase_
                                    noise_with_annot, sizing_mode="stretch_width")
 button_row = row(button, button2, align="center")
 model_first_selection_row = row(model1_text,radio_group_models, styles={"background-color":"rgba(255,127,14,0.8)", "border-radius":"6px"}, align="center") 
-model_second_selection_row = row(model2_text, radio_group_models2, styles={"background-color":"rgba(152,39,100,0.8)", "border-radius":"6px"}, align="center")
+model_second_selection_row = row(model2_text, radio_group_models2, styles={"background-color":"rgba(152,39,100,0.7)", "border-radius":"6px"}, align="center")
 model_selection_row= row(model_first_selection_row, space_2, model_second_selection_row, align="center")
 model_selection_interface = column(model_selection_row, train_test_split_slider, button_row, line_thickness, sizing_mode="stretch_width", align="center")
 core_row_layout = row(config_col, slider_menu_layout, data_table, model_selection_interface, config_col_2 , align="center", margin=0,
@@ -443,7 +552,13 @@ core_row_layout = row(config_col, slider_menu_layout, data_table, model_selectio
 core_row_layout_border = row(core_row_layout, styles={"background-color": BORDER_C, "padding":"8px 100px 8px 100px"},
                               sizing_mode="stretch_width", align="center")
 bottom_row = row(date_range_slider, styles={"background_color": BORDER_C}, align="center") # sizing_mode is incompatible with alignment centered
-final_layout = column(plot, core_row_layout_border, plot_2, sizing_mode="stretch_width")
+#row_bottom = row(button3, styles={"background_color": BORDER_C}, align="center")
+XAI_column = column(X,A,I_, width=40, align="center")
+XAI_button_column = column(button3, XAI_column, align="center")
+shapley_row = row(plot_3, XAI_button_column, plot_4,
+                   styles={"background_color": BORDER_C, "margin_bottom":"-100px", "padding":"30px 0px 100px 0px"}, sizing_mode="stretch_width")
+#column_bottom = column(row_bottom, sizing_mode="stretch_width", styles={"background_color": BORDER_C})
+final_layout = column(plot, core_row_layout_border, plot_2, shapley_row, sizing_mode="stretch_width")
 
 #EEEAE9
 
