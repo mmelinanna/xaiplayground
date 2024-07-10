@@ -520,8 +520,8 @@ picker = ColorPicker(title="BG_Color_Core")
 #picker.js_link('color', line.glyph, 'line_color')
 
 
-# -----------------------------------------------FINALIZE LAYOUT CURRENT_DOC--------------------------------------------#
-
+# -----------------------------------------------FINALIZE LAYOUT CURRENT_DOC--------------------------------------------##
+#dd
 
 # bokeh serve --show Synth_data_app_003.py
 # bokeh serve Synth_data_app_003.py --dev                        <---DEV-mode
