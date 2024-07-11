@@ -364,12 +364,13 @@ def calculate_shapleys():
                             "shap_values_formatted":temp_dict["shap_values_formatted"]}) 
         plot_3.add_layout(labels_M1)
         plot_3.y_range.factors = temp_dict["features"]
-        print(model_selection_dict[model_selection_second_index])
-        print(current_model_2.keys())
-        print(model_selection_dict[model_selection_second_index] in current_model_2.keys())
+        #print(model_selection_dict[model_selection_second_index])
+        #print(current_model_2.keys())
+        #print(model_selection_dict[model_selection_second_index] in current_model_2.keys())
 
-    if model_selection_dict[model_selection_second_index] in current_model_2.keys():  
-        print("WE ARE HERE")
+    if  model_selection_second_index is None:
+        print("model_2 is not selected")
+    elif model_selection_dict[model_selection_second_index] in current_model_2.keys():  
         tree_explainer = shap.TreeExplainer(current_model_2[model_selection_dict[model_selection_second_index]])    
         feature_names_ = datasets_tsl["M2"].columns[:-1]
         shap_values = tree_explainer(datasets_tsl["M2"].iloc[:,:-1])
@@ -529,10 +530,10 @@ picker = ColorPicker(title="BG_Color_Core")
 
 curdoc().title = "Synthetic data"
 slope_with_annot= row(slope, help_slope, align="center")
-amplitude_with_annot = row(amplitude, help_slope, align="center")
-phase_with_annot = row(phase, help_slope, align="center")
-freq_with_annot = row(freq, help_slope, align="center")
-noise_with_annot = row(noise, help_slope, align="center")
+amplitude_with_annot = row(amplitude, help_amplitude, align="center")
+offset_with_annot = row(phase, help_offset, align="center")
+freq_with_annot = row(freq, help_freq, align="center")
+noise_with_annot = row(noise, help_noise, align="center")
 
 space=Spacer(height=300, sizing_mode="stretch_width")
 space_2=Spacer(width=5)
@@ -540,25 +541,25 @@ space_3=Spacer(width=50)
 config_col = column(C, O, N, F, I, G, width=40, align="center", styles={"border-radius": "5px", "margin-right":"40px"})
 config_col_2 = column(C, O, N, F, I, G, width=40, align="center", styles={"margin-left":"50px", "margin-right":"-20px"}) 
 slider_menu_layout = column(slope_with_annot, amplitude, offset, freq, noise, sizing_mode="stretch_width")
-slider_menu_layout_annot = column(slope_with_annot, amplitude_with_annot, phase_with_annot, freq_with_annot,
+slider_menu_layout_annot = column(slope_with_annot, amplitude_with_annot, offset_with_annot, freq_with_annot,
                                    noise_with_annot, sizing_mode="stretch_width")
-button_row = row(button, button2, align="center")
+button_row = row(button, button3, align="center")
 model_first_selection_row = row(model1_text,radio_group_models, styles={"background-color":"rgba(255,127,14,0.8)", "border-radius":"6px"}, align="center") 
 model_second_selection_row = row(model2_text, radio_group_models2, styles={"background-color":"rgba(152,39,100,0.7)", "border-radius":"6px"}, align="center")
 model_selection_row= row(model_first_selection_row, space_2, model_second_selection_row, align="center")
 model_selection_interface = column(model_selection_row, train_test_split_slider, button_row, line_thickness, sizing_mode="stretch_width", align="center")
-core_row_layout = row(config_col, slider_menu_layout, data_table, model_selection_interface, config_col_2 , align="center", margin=0,
+core_row_layout = row(config_col, slider_menu_layout_annot, data_table, model_selection_interface, config_col_2 , align="center", margin=0,
                       styles={'font-size': "1.5rem","background-color": "#F4F4F4", "border-radius":"15px", "padding": "10px 10px 10px 10px",
                                 "border-style":"solid", "border-width":"2.0px"}, sizing_mode="stretch_width")
 core_row_layout_border = row(core_row_layout, styles={"background-color": BORDER_C, "padding":"8px 100px 8px 100px"},
                               sizing_mode="stretch_width", align="center")
 bottom_row = row(date_range_slider, styles={"background_color": BORDER_C}, align="center") # sizing_mode is incompatible with alignment centered
-row_bottom = row(button3, styles={"background_color": BORDER_C, "padding":"10px 0px 0px 0px"}, align="center")
+#row_bottom = row(button3, styles={"background_color": BORDER_C, "padding":"10px 0px 0px 0px"}, align="center")
+#column_bottom = column(row_bottom, sizing_mode="stretch_width", styles={"background_color": BORDER_C})
 #XAI_column = column(X,A,I_, width=40, align="center")
 #XAI_button_column = column(button3, XAI_column, align="center")
 shapley_row = row(plot_3, space_3,plot_4, styles={"background_color": BORDER_C, "margin_bottom":"-100px", "padding":"15px 0px 100px 0px"}, sizing_mode="stretch_width")
-column_bottom = column(row_bottom, sizing_mode="stretch_width", styles={"background_color": BORDER_C})
-final_layout = column(plot, core_row_layout_border, plot_2, column_bottom, shapley_row, sizing_mode="stretch_width") 
+final_layout = column(plot, core_row_layout_border, plot_2, shapley_row, sizing_mode="stretch_width") 
 
 #EEEAE9
 
