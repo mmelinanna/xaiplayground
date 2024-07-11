@@ -93,7 +93,7 @@ def cnn_initial(train):
 
 
 
-def walk_forward_validation_historic(data, test_set_len, model_selection):
+def walk_forward_validation_historic(data, test_set_len, model_selection, input_laggs=6):
 	"""
 	Arguments:
 		data: Sequence of observations as a list or NumPy array.
@@ -121,7 +121,7 @@ def walk_forward_validation_historic(data, test_set_len, model_selection):
 	for i in range(len(test_data)):
 		testX, testy = test_data[i, :-1], test_data[i, -1]      #--> 1x5; 1x1 from 30x5, 30x1
 		if model_selection=="CNN":
-			testX = testX.reshape((1, 6, 1))
+			testX = testX.reshape((1, input_laggs, 1))
 			y_pred=current_model.predict(testX)
 		else:
 			y_pred= current_model.predict([testX])

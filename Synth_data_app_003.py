@@ -233,10 +233,10 @@ plot_3.xaxis.axis_label = r"\(mean(|SHAP value|)\)"
 plot_3.xgrid.grid_line_color = None
 plot_4.xgrid.grid_line_color = None
 
-labels_M1 = LabelSet(x='shap_values', y='features', text='shap_values_formatted', level='annotation',
-                     x_offset=6, y_offset=-7, source=shapley_CDS, text_color='red')
-labels_M2 = LabelSet(x='shap_values', y='features', text='shap_values_formatted', level='annotation',
-                     x_offset=6, y_offset=-7, source=shapley_CDS_M2, text_color='red')
+labels_M1 = LabelSet(x='shap_values', y='features', text='shap_values_formatted', level='annotation', text_font_size="18px",
+                     x_offset=6, y_offset=-7, source=shapley_CDS, text_color= M1_COLOR,text_font ='helvetica')
+labels_M2 = LabelSet(x='shap_values', y='features', text='shap_values_formatted', level='annotation', text_color=M2_COLOR,
+                     x_offset=6, y_offset=-7, source=shapley_CDS_M2, text_font ='helvetica',text_font_size="18px")
 plot_3.add_layout(labels_M1)
 plot_4.add_layout(labels_M2)
 
