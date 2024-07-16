@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
-from datetime import datetime, date
+from datetime import date
 
 from bokeh.io import curdoc, show
 from bokeh.layouts import column, row
@@ -114,7 +114,7 @@ synthetic_data.round(decimals=4)
 #-----------------------------------------------BASIC BOKEH IMPLEMENTATION-------------------------------------------#
 
 plot = figure(min_width=MIN_WIDTH, max_width=MAX_WIDTH, height=MAIN_FIG_HEIGHT, width_policy="max", title="Synthetic time series",
-              tools="pan,reset,save, xwheel_zoom", margin=(0, 0, -1, 0), background_fill_color=BACKGROUND_C, min_border=30,
+              tools="pan,reset,save, wheel_zoom", margin=(0, 0, -1, 0), background_fill_color=BACKGROUND_C, min_border=30,
               border_fill_color=BORDER_C, styles={"padding-righ":"300", "border-right":"300px"},
             min_border_right=60, min_border_left=70, x_range=[0, 89], y_range=[-7, 25], align="center")
 
@@ -123,7 +123,7 @@ source = ColumnDataSource(data=dict(time=synthetic_data.index, synthetic_data=sy
 synth_data_line=plot.line('time', 'synthetic_data', source=source, line_width=2.5, line_alpha=0.8,  legend_label="synthetic_data")
 plot.legend.location = "top_left"
 plot.legend.background_fill_alpha = 0.8
-plot.xaxis.axis_label = "time"
+plot.xaxis.axis_label = "timestep"
 plot.yaxis.axis_label = "value"
 
 
@@ -195,10 +195,11 @@ shap_default = [0,0,0,0,0]
 shap_label_default = ["Calculating shap values...","Calculating shap values...","Calculating shap values...", "Calculating shap values...","Calculating shap values..."]
 shapley_CDS = ColumnDataSource({"features": feature_default, "shap_values":shap_default,"shap_values_formatted":[" "," "," "," "," "]})
 shapley_CDS_M2 =ColumnDataSource({"features": feature_default, "shap_values":shap_default,"shap_values_formatted":[" "," "," "," "," "]})
+shapley_CDS_BAR = ColumnDataSource({"time":[],"top":[],"bottom":[],"value":[], "bar_color":[], "shap_value":[]})
 
 plot_2 = figure(min_width=MIN_WIDTH, max_width=MAX_WIDTH, height=MAIN_FIG_HEIGHT, width_policy="max", title="Synthetic time series prediction",
-              tools="pan,reset,save,xwheel_zoom", margin=(-1, 0, 0, 0), background_fill_color=BACKGROUND_C, border_fill_color=BORDER_C,
-               min_border_left=70, min_border_right=60, x_range=plot.x_range, y_range=[-7, 25], align="center")
+              tools="pan,reset,save,wheel_zoom", margin=(-1, 0, 0, 0), background_fill_color=BACKGROUND_C, border_fill_color=BORDER_C,
+               min_border_left=70, min_border_right=60, x_range=plot.x_range, y_range=plot.y_range, align="center")
 train_data_glyph=plot_2.line('time', 'value', source=y_train_CDS, line_width=2.5, line_alpha=0.8, legend_label="train_data")
 test_data_glyph=plot_2.line('time', 'value', source=y_test_CDS, line_width=2.5, line_alpha=0.7, line_color="#2ca02c", legend_label="test_data",
                             muted_color="#2ca02c", muted_alpha=0.2)
@@ -209,11 +210,29 @@ pred_data_second_glyph=plot_2.line('time', 'predictions', source=y_pred_second_C
 plot_2.legend.location = "top_left"
 plot_2.legend.background_fill_alpha = 0.8
 plot_2.legend.click_policy="mute"
-plot_2.xaxis.axis_label = "time"
+plot_2.xaxis.axis_label = "timestep"
 plot_2.yaxis.axis_label = "value"
 #plot.toolbar.active_scroll = plot.select_one(WheelZoomTool)
 #plot_2.toolbar.active_scroll = plot_2.select_one(WheelZoomTool)  --->default Activ Scroll OFF
-
+TOOLTIPS = [
+    ("timestep", "@time"),
+    ("sum(SHAP value)", "@shap_value")
+    ]
+plot_5 = figure(min_width=MIN_WIDTH, max_width=MAX_WIDTH, height=MAIN_FIG_HEIGHT, width_policy="max", title="Synthetic time series SHAP values",
+              tools="pan,reset,save,box_zoom,hover", margin=(-1, 0, 0, 0), background_fill_color=BACKGROUND_C, border_fill_color=BORDER_C,
+               min_border_left=70, min_border_right=60, x_range=plot.x_range, y_range=plot.y_range, align="center", tooltips=TOOLTIPS)
+l1_=plot_5.line('time', 'value', source=y_test_CDS, line_width=2.5, line_alpha=0.7, line_color="#2ca02c", legend_label="test_data",
+                            muted_color="#2ca02c", muted_alpha=0.2)
+l2_=plot_5.line('time', 'value', source=y_train_CDS, line_width=2.5, line_alpha=0.8, legend_label="train_data")
+l3_=plot_5.line('time', 'predictions', source=y_pred_CDS, line_width=2.5, line_alpha=0.9, line_color=M1_COLOR, line_dash="dashdot",
+                             legend_label="model_prediction_M1", muted_color=M1_COLOR, muted_alpha=0.2)
+plot_5.scatter("time", 'predictions', source=y_pred_CDS, line_color="black", color=M1_COLOR)
+plot_5.vbar(x="time", bottom="bottom", top="top" ,color="bar_color", source=shapley_CDS_BAR, width=0.5, alpha=0.75)
+plot_5.yaxis.axis_label = r"\(\sum(SHAP value_t)\)"
+plot_5.legend.click_policy="mute"
+plot_5.legend.location = "top_left"
+plot_5.legend.background_fill_alpha = 0.8
+plot_5.xaxis.axis_label = "timestep"
 
 plot_3 = figure(min_width=MIN_WIDTH, max_width=MAX_WIDTH, height=MAIN_FIG_HEIGHT+100, width_policy="max", margin=(-1, 0, 0, 0),
                  background_fill_color=BACKGROUND_C, border_fill_color=BORDER_C, min_border_left=70, min_border_right=0,
@@ -234,9 +253,9 @@ plot_3.xgrid.grid_line_color = None
 plot_4.xgrid.grid_line_color = None
 
 labels_M1 = LabelSet(x='shap_values', y='features', text='shap_values_formatted', level='annotation', text_font_size="18px",
-                     x_offset=6, y_offset=-7, source=shapley_CDS, text_color= M1_COLOR,text_font ='helvetica')
+                     x_offset=6, y_offset=-5, source=shapley_CDS, text_color= M1_COLOR,text_font ='helvetica')
 labels_M2 = LabelSet(x='shap_values', y='features', text='shap_values_formatted', level='annotation', text_color=M2_COLOR,
-                     x_offset=6, y_offset=-7, source=shapley_CDS_M2, text_font ='helvetica',text_font_size="18px")
+                     x_offset=6, y_offset=-6, source=shapley_CDS_M2, text_font ='helvetica',text_font_size="18px")
 plot_3.add_layout(labels_M1)
 plot_4.add_layout(labels_M2)
 
@@ -247,7 +266,6 @@ from dataframe_lagger import time_series_lagger, train_test_split, walk_forward_
 
 def create_model(train_df, test_df, model_selection, input_laggs=6):
     assert model_selection in MODEL_OPTIONS, f"'{model_selection}' is not a valid choise. Please choose from {MODEL_OPTIONS}."
-
     if model_selection == "SARIMAX":
         ARMAmodel_ = ARIMA(train_df["values"], order = (2, 2, 2))    #ARIMA(p, d, q) -> pdq account for seasonality, trend, and noise in data
         SARIMAXmodel_ = SARIMAX(train_df["values"], order = (1,1,1), seasonal_order=(1,1,0,12), enforce_stationarity=False, enforce_invertibility=False)
@@ -271,7 +289,6 @@ def create_model(train_df, test_df, model_selection, input_laggs=6):
         y_pred_df.index = test_df["time"]
         print(y_pred_df)
 
-
     elif model_selection=="1D-CNN":
         data_concatenated = pd.concat([train_df, test_df.iloc[1:,:]], ignore_index=True)
         scaler = MinMaxScaler()
@@ -285,7 +302,6 @@ def create_model(train_df, test_df, model_selection, input_laggs=6):
         y_pred_df.index = test_df["time"]
         print("Mean_Absolute_Error_CNN: "+ str(mae))
 
-
     elif model_selection=="XGBOOST":
         data_concatenated = pd.concat([train_df, test_df.iloc[1:,:]], ignore_index=True)
         tsl = time_series_lagger(data_concatenated.loc[:,"values"].to_list(), n_in=input_laggs, n_out=1, dropnan=True)
@@ -294,7 +310,6 @@ def create_model(train_df, test_df, model_selection, input_laggs=6):
         y_pred_df = pd.DataFrame(data={"Predictions":y_pred, "lower values":y_pred, "upper values":y_pred})
         y_pred_df.index = test_df["time"]
         print(y_pred_df)
-
 
     return current_model, y_pred_df, tsl
 
@@ -340,17 +355,45 @@ def update_model_(split_ind=60, model_selection="SARIMAX", model_selection_2=Non
     
 
 # -------------------------------------SHAPLEY IMPLEMENTATION & BOKEH TRANSFORMATION------------------------------------# 
+def update_shap_bar(y_pred_time, y_pred_, shapleys):
+    temporary_dict = {"time":[],"top":[], "bottom":[], "color":[], "value":[], "shapleys":[]}
+    temporary_dict["time"] =  y_pred_time
+    temporary_dict["value"] = y_pred_
+    print(len(shapleys))
+    print(len(y_pred_))
+    for i, shap_ in enumerate(shapleys):
+        temporary_dict["shapleys"].append(shap_.sum())
+        curr_val_ = y_pred_[i]
+        if shap_.sum() < 0:
+            temporary_dict["top"].append(curr_val_)
+            temporary_dict["color"].append("#0000FF")
+            temporary_dict["bottom"].append(curr_val_ + shap_.sum())
+        else:
+            temporary_dict["top"].append(curr_val_+shap_.sum())
+            temporary_dict["color"].append("#FF0000")
+            temporary_dict["bottom"].append(curr_val_)
+    shapley_CDS_BAR.data = ({"time":temporary_dict["time"],
+                             "bottom":temporary_dict["bottom"],
+                             "top":temporary_dict["top"],
+                             "value":y_pred_ ,
+                             "bar_color":temporary_dict["color"],
+                             "shap_value":temporary_dict["shapleys"]})
+    
+
+
 def calculate_shapleys():
     print("__INIT_SHAPLEYS__")
     print(current_model_1.keys())
     model_selection_index=radio_group_models.active
     model_selection_second_index=radio_group_models2.active
-    #if "RF_REGR" in current_model_1.keys():
-    if model_selection_dict[model_selection_index] in current_model_1.keys():  #validates if M1 is chosen AND calculated
+    if model_selection_index is None:
+        print("!-----skipped shapley calculation: model_1 is currently not set.------!")
+    elif model_selection_dict[model_selection_index] in current_model_1.keys():  #validates if M1 is chosen AND calculated
         tree_explainer = shap.TreeExplainer(current_model_1[model_selection_dict[model_selection_index]])    
         feature_names_ = datasets_tsl["M1"].columns[:-1]
         shap_values = tree_explainer(datasets_tsl["M1"].iloc[:,:-1])
         temp_dict={"features": [], "shap_values":[],"shap_values_formatted":[]}
+        current_model_1["M1"]=shap_values
         for i, column_name in enumerate(datasets_tsl["M1"].columns[0:-1]):
             shapley_absolute_mean = np.mean(np.abs(shap_values.values[:,i]))
             temp_dict["features"].append(column_name)
@@ -362,14 +405,14 @@ def calculate_shapleys():
         shapley_CDS.data = ({"features":temp_dict["features"],
                             "shap_values":temp_dict["shap_values"],
                             "shap_values_formatted":temp_dict["shap_values_formatted"]}) 
-        plot_3.add_layout(labels_M1)
         plot_3.y_range.factors = temp_dict["features"]
-        #print(model_selection_dict[model_selection_second_index])
+        y_pred_ = y_pred_CDS.data["predictions"]
+        update_shap_bar(y_pred_time = y_pred_CDS.data["time"], y_pred_ = y_pred_, shapleys=shap_values.values[-len(y_pred_):])
         #print(current_model_2.keys())
         #print(model_selection_dict[model_selection_second_index] in current_model_2.keys())
 
     if  model_selection_second_index is None:
-        print("model_2 is not selected")
+        print("!-----skipped shapley calculation: model_2 is currently not set.------!")
     elif model_selection_dict[model_selection_second_index] in current_model_2.keys():  
         tree_explainer = shap.TreeExplainer(current_model_2[model_selection_dict[model_selection_second_index]])    
         feature_names_ = datasets_tsl["M2"].columns[:-1]
@@ -390,7 +433,6 @@ def calculate_shapleys():
         shapley_CDS_M2.data = ({"features":temp_dict["features"],
                             "shap_values":temp_dict["shap_values"],
                             "shap_values_formatted":temp_dict["shap_values_formatted"]}) 
-        plot_4.add_layout(labels_M2)
         plot_4.y_range.factors = temp_dict["features"] 
     else:
         print("There is currently no model selected AND/OR instanciated")
@@ -411,30 +453,30 @@ def update_x_range(event):
 # -----------------------------------------------USER EXPLANATION (HTML)----------------------------------------------#
 help_slope = HelpButton(tooltip=Tooltip(content=HTML("""
 the slope represents the general trend of the time series.<br /> It determines the <b>average increase</b>
-in y over a period of time.<br/>More information: <a href="https://en.wikipedia.org/wiki/Slope">slope</a>!
+in y over a period of time.<br/>More information: <a href="https://en.wikipedia.org/wiki/Slope">slope</a>
 """), position="right"), align="center")
 
 help_noise = HelpButton(tooltip=Tooltip(content=HTML("""
-Noise in time series data refers to the <b> random variations and fluctuations </b> that are not part of 
-the underlying pattern or signal. <br/>More information: <a href="https://en.wikipedia.org/wiki/Noise_(signal_processing)">noise</a>!
+Noise in time series data refers to the <b> random variations and fluctuations </b><br />that are not part of 
+the underlying pattern or signal. <br/>More information: <a href="https://en.wikipedia.org/wiki/Noise_(signal_processing)">noise</a>
 """), position="right"), align="center")
 
 help_amplitude = HelpButton(tooltip=Tooltip(content=HTML("""
-Amplitude refers to the measure of change in a periodic variable within a single period. 
+Amplitude refers to the measure of change in a periodic variable within a single period.<br /> 
 In the context of time series data, the amplitude represents <b>the height of the peaks or the depth of the troughs </b> relative to the central value
-<br/>More information: <a href="https://en.wikipedia.org/wiki/Amplitude">amplitude</a>!
+<br/>More information: <a href="https://en.wikipedia.org/wiki/Amplitude">amplitude</a>
 """), position="right"), align="center")
 
 help_offset = HelpButton(tooltip=Tooltip(content=HTML("""
 An offset in time series data represents a constant component that <b>shifts the entire 
-series up or down on the y-axis </b>. It is essentially a baseline level from which the values of the series are measured
+series up or down on the y-axis </b>.<br />It is essentially a baseline level from which the values of the series are measured
 the slope represents the general trend of the time series.
-<br/>More information: <a href="https://baresquare.com/blog/decoding-time-series-an-in-depth-look-at-definitions-types-and-challenges">offset</a>!
+<br/>More information: <a href="https://baresquare.com/blog/decoding-time-series-an-in-depth-look-at-definitions-types-and-challenges">offset</a>
 """), position="right"), align="center")
 
 help_freq = HelpButton(tooltip=Tooltip(content=HTML("""
 Frequency in time series data refers to the number of occurrences of a <b> repeating event per unit of time</b>. </br>
-It indicates how often a particular pattern or cycle repeats within a specified timeframe.<br/>More information: <a href="https://en.wikipedia.org/wiki/Frequency">frequency</a>!
+It indicates how often a particular pattern or cycle repeats within a specified timeframe.<br/>More information: <a href="https://en.wikipedia.org/wiki/Frequency">frequency</a>
 """), position="right"), align="center")
 
 
@@ -497,7 +539,7 @@ for widget_ in [offset,slope, amplitude, phase, freq]:
     #widget_.js_on_change("value", SetValue(button, "label", "Apply Model"))  
 
 
-for line_ in [synth_data_line, train_data_glyph, test_data_glyph, pred_data_glyph]:
+for line_ in [synth_data_line, train_data_glyph, test_data_glyph, pred_data_glyph, l1_,l2_,l3_]:
     line_thickness.js_link(attr='value', other=line_.glyph, other_attr='line_width')                 
 
 radio_group_models = RadioGroup(labels=MODEL_OPTIONS, active=None, align="center")
@@ -531,7 +573,7 @@ picker = ColorPicker(title="BG_Color_Core")
 curdoc().title = "Synthetic data"
 slope_with_annot= row(slope, help_slope, align="center")
 amplitude_with_annot = row(amplitude, help_amplitude, align="center")
-offset_with_annot = row(phase, help_offset, align="center")
+offset_with_annot = row(offset, help_offset, align="center")
 freq_with_annot = row(freq, help_freq, align="center")
 noise_with_annot = row(noise, help_noise, align="center")
 
@@ -554,12 +596,12 @@ core_row_layout = row(config_col, slider_menu_layout_annot, data_table, model_se
 core_row_layout_border = row(core_row_layout, styles={"background-color": BORDER_C, "padding":"8px 100px 8px 100px"},
                               sizing_mode="stretch_width", align="center")
 bottom_row = row(date_range_slider, styles={"background_color": BORDER_C}, align="center") # sizing_mode is incompatible with alignment centered
-#row_bottom = row(button3, styles={"background_color": BORDER_C, "padding":"10px 0px 0px 0px"}, align="center")
-#column_bottom = column(row_bottom, sizing_mode="stretch_width", styles={"background_color": BORDER_C})
+row_bottom = row(button3, styles={"background_color": BORDER_C, "padding":"10px 0px 0px 0px", "margin":"-50px -58px 0px 0px"}, align="center")
+column_bottom = column(row_bottom, sizing_mode="stretch_width", styles={"background_color": BORDER_C})
 #XAI_column = column(X,A,I_, width=40, align="center")
 #XAI_button_column = column(button3, XAI_column, align="center")
 shapley_row = row(plot_3, space_3,plot_4, styles={"background_color": BORDER_C, "margin_bottom":"-100px", "padding":"15px 0px 100px 0px"}, sizing_mode="stretch_width")
-final_layout = column(plot, core_row_layout_border, plot_2, shapley_row, sizing_mode="stretch_width") 
+final_layout = column(plot, core_row_layout_border, plot_2, shapley_row, column_bottom, plot_5, sizing_mode="stretch_width") 
 
 #EEEAE9
 
