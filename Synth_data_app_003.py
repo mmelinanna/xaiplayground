@@ -633,11 +633,11 @@ show(final_layout)
 
 ### Forecast Model implementation 
 #   |--- 1. State of the Art Deterministic Forecast: (SARMIAX)           √ DONE
-#   |--- 2. ML-based: Random Forest                                      - IN PROGRESS 
-#   |--- 3. ML-based: XGB Boost                                         
-#   |--- 4. Sophisticated ML-model: (CNN), (LSTM)                        - IN PROGRESS
+#   |--- 2. ML-based: Random Forest                                      √ DONE
+#   |--- 3. ML-based: XGB Boost                                          √ DONE
+#   |--- 4. Sophisticated ML-model: (CNN), (LSTM)                        √ DONE
 
 ### Fine Tuning
-#    |--- 1.Interactive Legends (Muting)
+#    |--- 1.Interactive Legends (Muting)                                  √ DONE
 
 #comment 1
