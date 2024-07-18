@@ -59,3 +59,6 @@ It is denoted as (P, D, Q, s), where:
 P represents the seasonal order of the Seasonal AutoRegressive (SAR) component, which captures the seasonal linear relationship between the current observation and its past values separated by a seasonal period s.
 D represents the seasonal order of differencing for seasonal stationarity.
 Q represents the seasonal order of the Seasonal Moving Average (SMA) component, which captures the seasonal linear relationship between the current observation and past white noise (residuals) separated by a seasonal period s.
+
+
+## SETUP Requirements
