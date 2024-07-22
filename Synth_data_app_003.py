@@ -570,7 +570,7 @@ picker = ColorPicker(title="BG_Color_Core")
 # bokeh serve Synth_data_app_003.py --dev                        <---DEV-mode
 # http://localhost:5006/Synth_data_app
 
-curdoc().title = "Synthetic data"
+curdoc().title = "Jans synthetic data"
 slope_with_annot= row(slope, help_slope, align="center")
 amplitude_with_annot = row(amplitude, help_amplitude, align="center")
 offset_with_annot = row(offset, help_offset, align="center")
@@ -603,16 +603,12 @@ column_bottom = column(row_bottom, sizing_mode="stretch_width", styles={"backgro
 shapley_row = row(plot_3, space_3,plot_4, styles={"background_color": BORDER_C, "margin_bottom":"-100px", "padding":"15px 0px 100px 0px"}, sizing_mode="stretch_width")
 final_layout = column(plot, core_row_layout_border, plot_2, shapley_row, column_bottom, plot_5, sizing_mode="stretch_width") 
 
-#EEEAE9
-
 model_selection_interface.styles["background-color"] ="ff7f0e"
 cd = curdoc()
 #cd.template = template
 cd.add_root(final_layout)
 cd.theme = Theme(filename="theme.yaml") #improving the modularity of the app and decouple the style layer from the view layer
 cd.add_root(css_div)
-
-
 print(core_row_layout.styles["background-color"])
 
 show(final_layout)

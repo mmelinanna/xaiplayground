@@ -1,5 +1,20 @@
 # XAIplayground
 
+## SETUP Requirements
+- Ensure to have all required libraries, packages and dependencies installed in your current environment. 
+- Run the most recent main file (Synthetic_data_app.py) with the highest index via bokeh serve app.py from the command line. (The current index is: 003)
+- Navigate to your application folder where your main file is located and run :
+  - **bokeh serve --show Synth_data_app_003.py** or 
+  - **bokeh serve --dev Synth_data_app_003.py** 
+
+  If you choose the first option there will automatically open a window in your default browser with your bokeh app running. The latter one is for running in development mode. You can access the running app manualy via localhost.
+
+## LIMITATIONS of XAI
+>[!CAUTION] 
+> Please be aware that the **SARIMAX** model and the **1D-CNN** do currently **not support** explainable approaches through Shapley Calculations. If you choose one or both of these models, the explainability BLOCK will not update. There wont be any shapley-value based plots in your browser. 
+
+
+
 ## Introduction
 This project aims to develop a web-based  user friendly AI playground application where it is able to interact playfully with the underlying data, models and explainability concepts and receive immediate response about the impact of their choices. The central focus is to develop more traceability, transparancy and trust by actively including the end user in the decision making process of the machine learning models and visualize whole process. This is done by following the key concepts: 
 
@@ -17,10 +32,11 @@ This project aims to develop a web-based  user friendly AI playground applicatio
   - JavaScript
   - Python 
 - **Backend**:
-  - Node.js (?)
-  - Python (streamlit?)
+  - JavaScript (?)
+  - Python (bokeh server powered by dash/plotly) 
 
 ## Bokeh Server file structure
+<pre>
 -- myapp(directory)\
    |\
    +---__init__.py\
@@ -40,6 +56,7 @@ This project aims to develop a web-based  user friendly AI playground applicatio
    +---theme.yaml\
    +---templates\
         +---index.html\
+</pre>
 
 
 ## SARIMAX Model
@@ -61,4 +78,3 @@ D represents the seasonal order of differencing for seasonal stationarity.
 Q represents the seasonal order of the Seasonal Moving Average (SMA) component, which captures the seasonal linear relationship between the current observation and past white noise (residuals) separated by a seasonal period s.
 
 
-## SETUP Requirements
