@@ -8,7 +8,7 @@ from bokeh.io import curdoc, show
 from bokeh.layouts import column, row
 from bokeh.models import ColumnDataSource, Slider, TextInput, DateRangeSlider, HelpButton, Tooltip, DataTable
 from bokeh.models import NumberFormatter, TableColumn, RadioGroup, Button, CustomJS, SetValue, Div, ColorPicker
-from bokeh.models import Label, Spacer, Range1d, WheelZoomTool, LabelSet
+from bokeh.models import Label, Spacer, Range1d, WheelZoomTool, LabelSet, HoverTool
 from bokeh.plotting import figure
 from bokeh.models.dom import HTML
 from bokeh.themes import Theme
@@ -60,6 +60,7 @@ AUTOCORELLATION :
 
 def generate_seasonal_component(t, amplitude, frequency, shift):
     return amplitude * np.sin(2 * np.pi * frequency * t + shift* np.pi)
+    #t=0 -> sin(t) = 0 t=0.333 -> sin(2π* 0.33 * fq(=0.1)) = sin(0.209) = 0.207 t = 10 -> sin (2π* 3.33 * fq(0.1))= 0.866 
 
 def generate_trend_component(t, slope, curvature_quadratic, curvature_cubic):
     return slope * t + curvature_quadratic * t**2 + curvature_cubic * t**3
@@ -89,7 +90,7 @@ def generate_synthetic_time_series(t, amplitude, frequency, slope, shift, offset
     return np.round(synthetic_data_, 4)
 
 # SET INITIAL PARAMETERS   
-t = np.linspace(0, 30, 90)
+t = np.linspace(0, 29.6666666666, 90)
 amplitude = 2.0               
 shift = 0
 offset = 0
@@ -195,8 +196,14 @@ shap_default = [0,0,0,0,0]
 shap_label_default = ["Calculating shap values...","Calculating shap values...","Calculating shap values...", "Calculating shap values...","Calculating shap values..."]
 shapley_CDS = ColumnDataSource({"features": feature_default, "shap_values":shap_default,"shap_values_formatted":[" "," "," "," "," "]})
 shapley_CDS_M2 =ColumnDataSource({"features": feature_default, "shap_values":shap_default,"shap_values_formatted":[" "," "," "," "," "]})
-shapley_CDS_BAR = ColumnDataSource({"time":[],"top":[],"bottom":[],"value":[], "bar_color":[], "shap_value":[]})
+shapley_CDS_BAR = ColumnDataSource({"time":[],"top":[],"bottom":[],"value":[], "bar_color":[], "shap_value":[], "var1(t-9)":[],"var1(t-8)":[],
+                                    'var1(t-7)':[], 'var1(t-6)':[], 'var1(t-5)':[],'var1(t-4)':[], 'var1(t-3)':[], 'var1(t-2)':[], 'var1(t-1)':[],
+                                    'var1(t)':[]})
+#'var1(t-9)':[], 'var1(t-8)':[], 'var1(t-7)':[], 'var1(t-6)':[], 'var1(t-5)':[],'var1(t-4)':[], 'var1(t-3)':[], 'var1(t-2)':[], 'var1(t-1)':[]}
 
+
+# PLOT_2 
+# -->(MIRRORING PLOT_1 + PREDICTION)
 plot_2 = figure(min_width=MIN_WIDTH, max_width=MAX_WIDTH, height=MAIN_FIG_HEIGHT, width_policy="max", title="Synthetic time series prediction",
               tools="pan,reset,save,wheel_zoom", margin=(-1, 0, 0, 0), background_fill_color=BACKGROUND_C, border_fill_color=BORDER_C,
                min_border_left=70, min_border_right=60, x_range=plot.x_range, y_range=plot.y_range, align="center")
@@ -214,26 +221,11 @@ plot_2.xaxis.axis_label = "timestep"
 plot_2.yaxis.axis_label = "value"
 #plot.toolbar.active_scroll = plot.select_one(WheelZoomTool)
 #plot_2.toolbar.active_scroll = plot_2.select_one(WheelZoomTool)  --->default Activ Scroll OFF
-TOOLTIPS = [
-    ("timestep", "@time"),
-    ("sum(SHAP value)", "@shap_value")
-    ]
-plot_5 = figure(min_width=MIN_WIDTH, max_width=MAX_WIDTH, height=MAIN_FIG_HEIGHT, width_policy="max", title="Synthetic time series SHAP values",
-              tools="pan,reset,save,box_zoom,hover", margin=(-1, 0, 0, 0), background_fill_color=BACKGROUND_C, border_fill_color=BORDER_C,
-               min_border_left=70, min_border_right=60, x_range=plot.x_range, y_range=plot.y_range, align="center", tooltips=TOOLTIPS)
-l1_=plot_5.line('time', 'value', source=y_test_CDS, line_width=2.5, line_alpha=0.7, line_color="#2ca02c", legend_label="test_data",
-                            muted_color="#2ca02c", muted_alpha=0.2)
-l2_=plot_5.line('time', 'value', source=y_train_CDS, line_width=2.5, line_alpha=0.8, legend_label="train_data")
-l3_=plot_5.line('time', 'predictions', source=y_pred_CDS, line_width=2.5, line_alpha=0.9, line_color=M1_COLOR, line_dash="dashdot",
-                             legend_label="model_prediction_M1", muted_color=M1_COLOR, muted_alpha=0.2)
-plot_5.scatter("time", 'predictions', source=y_pred_CDS, line_color="black", color=M1_COLOR)
-plot_5.vbar(x="time", bottom="bottom", top="top" ,color="bar_color", source=shapley_CDS_BAR, width=0.5, alpha=0.75)
-plot_5.yaxis.axis_label = r"\(\sum(SHAP value_t)\)"
-plot_5.legend.click_policy="mute"
-plot_5.legend.location = "top_left"
-plot_5.legend.background_fill_alpha = 0.8
-plot_5.xaxis.axis_label = "timestep"
 
+
+
+# PLOT_3 & PLOT_4 
+# ----->(MEAN of ABSOLUTE SHAPLEY SUMS (feature specific) for M1 and M2)
 plot_3 = figure(min_width=MIN_WIDTH, max_width=MAX_WIDTH, height=MAIN_FIG_HEIGHT+100, width_policy="max", margin=(-1, 0, 0, 0),
                  background_fill_color=BACKGROUND_C, border_fill_color=BORDER_C, min_border_left=70, min_border_right=0,
                    align="center", y_range=shapley_CDS.data["features"], x_range=[0,1.5], 
@@ -258,6 +250,62 @@ labels_M2 = LabelSet(x='shap_values', y='features', text='shap_values_formatted'
                      x_offset=6, y_offset=-6, source=shapley_CDS_M2, text_font ='helvetica',text_font_size="18px")
 plot_3.add_layout(labels_M1)
 plot_4.add_layout(labels_M2)
+
+
+# PLOT_5 
+# ----> Aggregated Shapley Bar plot with DRILL-DOWN Hovering
+
+TOOLTIPS = [
+    ("timestep", "@time"),
+    ("sum(SHAP value)", "@shap_value"),
+    ("var1(t-9)", "@{var1(t-9)}{0.4f}"),
+    ("var1(t-8)", "@{var1(t-8)}{0.4f}"),
+    ("var1(t-7)", "@{var1(t-7)}{0.4f}"),
+    ("var1(t-6)", "@{var1(t-6)}{0.4f}"),
+    ("var1(t-5)", "@{var1(t-5)}{0.4f}"),
+    ("var1(t-4)", "@{var1(t-4)}{0.4f}"),
+    ("var1(t-3)", "@{var1(t-3)}{0.4f}"),
+    ("var1(t-2)", "@{var1(t-2)}{0.4f}"),
+    ("var1(t-1)", "@{var1(t-1)}{0.4f}"),
+    ("var1(t)", "@{var1(t)}{0.4f}"),
+    ]
+
+TOOLTIPS2 = """
+    <div>
+        <div>
+            <span style="font-size: 15px; font-weight: bold;">timestep: @time</span>
+        </div>
+        <div>
+            <span style="font-size: 15px;">sum(SHAP value): @shap_value</span>
+        </div>
+        <div style="margin-top: 10px;">
+            <span style="font-size: 15px;">var1(t-9): @{var1(t-9)}{0.4f}</span>
+            <div style="background-color: #e0e0e0; width: @{var1(t-9)}%; height: 15px;">
+                <div style="background-color: #2ca02c; width: @{var1(t-9)}%; height: 100%;"></div>
+            </div>
+        </div>
+    </div>
+"""
+
+plot_5 = figure(min_width=MIN_WIDTH, max_width=MAX_WIDTH, height=MAIN_FIG_HEIGHT, width_policy="max", title="Synthetic time series SHAP values",
+              tools="pan,reset,save,box_zoom", margin=(-1, 0, 0, 0), background_fill_color=BACKGROUND_C, border_fill_color=BORDER_C,
+               min_border_left=70, min_border_right=60, x_range=plot.x_range, y_range=plot.y_range, align="center")
+l1_=plot_5.line('time', 'value', source=y_test_CDS, line_width=2.5, line_alpha=0.7, line_color="#2ca02c", legend_label="test_data",
+                            muted_color="#2ca02c", muted_alpha=0.2)
+l2_=plot_5.line('time', 'value', source=y_train_CDS, line_width=2.5, line_alpha=0.8, legend_label="train_data")
+l3_=plot_5.line('time', 'predictions', source=y_pred_CDS, line_width=2.5, line_alpha=0.9, line_color=M1_COLOR, line_dash="dashdot",
+                             legend_label="model_prediction_M1", muted_color=M1_COLOR, muted_alpha=0.2)
+scatter_renderer = plot_5.scatter("time", 'predictions', source=y_pred_CDS, line_color="black", color=M1_COLOR)
+vbar_renderer = plot_5.vbar(x="time", bottom="bottom", top="top" ,color="bar_color", source=shapley_CDS_BAR, width=0.5, alpha=0.75)
+hover_tool = HoverTool(tooltips=TOOLTIPS, renderers=[vbar_renderer])
+
+plot_5.add_tools(hover_tool)
+plot_5.yaxis.axis_label = r"\(\sum(SHAP value_t)\)"
+plot_5.legend.click_policy="mute"
+plot_5.legend.location = "top_left"
+plot_5.legend.background_fill_alpha = 0.8
+plot_5.xaxis.axis_label = "timestep"
+
 
 
 # Include own modules and functions
@@ -356,13 +404,26 @@ def update_model_(split_ind=60, model_selection="SARIMAX", model_selection_2=Non
 
 # -------------------------------------SHAPLEY IMPLEMENTATION & BOKEH TRANSFORMATION------------------------------------# 
 def update_shap_bar(y_pred_time, y_pred_, shapleys):
-    temporary_dict = {"time":[],"top":[], "bottom":[], "color":[], "value":[], "shapleys":[]}
+    shapley_values_ = shapleys.values[-len(y_pred_):]
+    temporary_dict = {"time":[],"top":[], "bottom":[], "color":[], "value":[], "shapleys":[],"var1(t-9)":[],"var1(t-8)":[], 
+                      'var1(t-7)':[], 'var1(t-6)':[], 'var1(t-5)':[],'var1(t-4)':[], 'var1(t-3)':[], 'var1(t-2)':[],
+                      'var1(t-1)':[], 'var1(t)':[]}
     temporary_dict["time"] =  y_pred_time
     temporary_dict["value"] = y_pred_
-    print(len(shapleys))
+    print(len(shapley_values_))
     print(len(y_pred_))
-    for i, shap_ in enumerate(shapleys):
+    for i, shap_ in enumerate(shapley_values_):
         temporary_dict["shapleys"].append(shap_.sum())
+        temporary_dict["var1(t-9)"].append(shap_[0].round(4))
+        temporary_dict["var1(t-8)"].append(shap_[1].round(4))
+        temporary_dict["var1(t-7)"].append(shap_[2].round(4))
+        temporary_dict["var1(t-6)"].append(shap_[3].round(4))
+        temporary_dict["var1(t-5)"].append(shap_[4].round(4))
+        temporary_dict["var1(t-4)"].append(shap_[5].round(4))
+        temporary_dict["var1(t-3)"].append(shap_[6].round(4))
+        temporary_dict["var1(t-2)"].append(shap_[7].round(4))
+        temporary_dict["var1(t-1)"].append(shap_[8].round(4))
+        temporary_dict["var1(t)"].append(shap_[9].round(4))
         curr_val_ = y_pred_[i]
         if shap_.sum() < 0:
             temporary_dict["top"].append(curr_val_)
@@ -377,7 +438,18 @@ def update_shap_bar(y_pred_time, y_pred_, shapleys):
                              "top":temporary_dict["top"],
                              "value":y_pred_ ,
                              "bar_color":temporary_dict["color"],
-                             "shap_value":temporary_dict["shapleys"]})
+                             "shap_value":temporary_dict["shapleys"],
+                             "var1(t-9)":temporary_dict["var1(t-9)"],
+                             "var1(t-8)":temporary_dict["var1(t-8)"],
+                             "var1(t-7)":temporary_dict["var1(t-7)"],
+                             "var1(t-6)":temporary_dict["var1(t-6)"],
+                             "var1(t-5)":temporary_dict["var1(t-5)"],
+                             "var1(t-4)":temporary_dict["var1(t-4)"],
+                             "var1(t-3)":temporary_dict["var1(t-3)"],
+                             "var1(t-2)":temporary_dict["var1(t-2)"],
+                             "var1(t-1)":temporary_dict["var1(t-1)"],
+                             "var1(t)":temporary_dict["var1(t)"],
+                             })
     
 
 
@@ -407,7 +479,7 @@ def calculate_shapleys():
                             "shap_values_formatted":temp_dict["shap_values_formatted"]}) 
         plot_3.y_range.factors = temp_dict["features"]
         y_pred_ = y_pred_CDS.data["predictions"]
-        update_shap_bar(y_pred_time = y_pred_CDS.data["time"], y_pred_ = y_pred_, shapleys=shap_values.values[-len(y_pred_):])
+        update_shap_bar(y_pred_time = y_pred_CDS.data["time"], y_pred_ = y_pred_, shapleys=shap_values)
         #print(current_model_2.keys())
         #print(model_selection_dict[model_selection_second_index] in current_model_2.keys())
 
@@ -570,7 +642,7 @@ picker = ColorPicker(title="BG_Color_Core")
 # bokeh serve Synth_data_app_003.py --dev                        <---DEV-mode
 # http://localhost:5006/Synth_data_app
 
-curdoc().title = "Jans synthetic data"
+curdoc().title = "XAI playground"
 slope_with_annot= row(slope, help_slope, align="center")
 amplitude_with_annot = row(amplitude, help_amplitude, align="center")
 offset_with_annot = row(offset, help_offset, align="center")
@@ -610,6 +682,7 @@ cd.add_root(final_layout)
 cd.theme = Theme(filename="theme.yaml") #improving the modularity of the app and decouple the style layer from the view layer
 cd.add_root(css_div)
 print(core_row_layout.styles["background-color"])
+print(t)
 
 show(final_layout)
 
